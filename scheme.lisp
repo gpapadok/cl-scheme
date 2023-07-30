@@ -177,8 +177,8 @@
 					  (funcall #'evaluate form env))
 				      branches))
 			(body (Procedure-body root-fn))
-			(closure (create-procedure-env root-fn args env)))
-		   (evaluate-body body closure)))
+			(scope (create-procedure-env root-fn args env)))
+		   (evaluate-body body scope)))
 		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
