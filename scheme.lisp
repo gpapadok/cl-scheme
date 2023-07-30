@@ -100,7 +100,7 @@
 	 (if (funcall #'evaluate (car args) env)
 	     (funcall #'evaluate (cadr args) env)
 	     (funcall #'evaluate (caddr args) env))
-	 "Error: malformed if special form")) ; Just a string for now.
+	 (error "malformed if special form")))
     ((or)
      (let ((frst (funcall #'evaluate (car args) env)))
        (if frst
@@ -153,7 +153,11 @@
     ((lambda)
      (make-Procedure :params (car args)
 		     :body (cdr args)
-		     :env env))))
+		     :env env))
+    ((quote)
+     (if (> (length args) 1)
+	 (error "wrong number of args ~a" (length args)) ; TODO: if-let macro
+	 (car args)))))
 
 (defun evaluate (expr &optional (env *global-env*))
   (if (consp expr)
@@ -175,7 +179,7 @@
 			(body (Procedure-body root-fn))
 			(closure (create-procedure-env root-fn args env)))
 		   (evaluate-body body closure)))
-		(t (format t "~a not callable~%" root))))))
+		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
 	((symbolp expr)
@@ -189,10 +193,12 @@
 
 (defun repl ()
   (loop
-    (let ((result (evaluate (prompt-expr) *global-env*)))
-      (if (equal result :quit)
-	  (return)
-	  (format t "~a~%" result))))
+    (handler-case
+	(let ((result (evaluate (prompt-expr) *global-env*)))
+	  (if (equal result :quit)
+	      (return)
+	      (format t "~a~%" result)))
+      (error (err) (format t "~a~%" err))))
   (format t "Bye!"))
 
 (repl)
