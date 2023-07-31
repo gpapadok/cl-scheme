@@ -89,13 +89,10 @@
 	    env)))
 
 (defun evaluate-body (body env)
-  ;; TODO: This could probably be rewritten.
-  (dolist (expression
-	   (butlast body)
-	   (progn
-	     (funcall #'evaluate
-		      (car (last body))
-		      env)))
+  (dolist (expression (butlast body)
+	   (funcall #'evaluate
+		    (car (last body))
+		    env))
     (funcall #'evaluate expression env)))
 
 (defun traverse-quasiquoted (tree)
