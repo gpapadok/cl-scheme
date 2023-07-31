@@ -2,8 +2,12 @@
   (:use :cl))
 (in-package :cl-scheme)
 
+(defconstant +quasiquote-symbol+
+  (or #+SBCL 'sb-int:quasiquote
+      nil))
+
 (defparameter *special-forms*
-  '(define
+  `(define
     if
     cond
     and
@@ -13,6 +17,7 @@
     lambda
     quote
     quasiquote
+    ,+quasiquote-symbol+
     unquote
     mu
     define-macro
@@ -93,6 +98,14 @@
 		      env)))
     (funcall #'evaluate expression env)))
 
+(defun traverse-quasiquoted (tree)
+  (if (atom tree)
+      tree
+      (if (eq 'unquote (car tree))
+	  (funcall #'evaluate (cadr tree))
+	  (cons (visit (car tree))
+		(visit (cdr tree))))))
+
 (defun evaluate-special-form (form args env)
   (case form
     ((if)
@@ -157,7 +170,12 @@
     ((quote)
      (if (> (length args) 1)
 	 (error "wrong number of args ~a" (length args)) ; TODO: if-let macro
-	 (car args)))))
+	 (car args)))
+    (`(or quasiquote ,+quasiquote-symbol+)
+     (if (> (length args) 1)
+	 (error "wrong number of args ~a" (length args)) ; TODO: if-let macro
+	 (traverse-quasiquoted (car args))))
+    ))
 
 (defun evaluate (expr &optional (env *global-env*))
   (if (consp expr)
