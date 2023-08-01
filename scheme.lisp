@@ -58,6 +58,10 @@
 	    (cons 'list #'list)
 	    (cons 'length #'length)
 	    (cons 'print #'print)
+	    (cons 'map #'(lambda (function sequence) ; TODO: Figure out how to use map without quoting
+			   (mapcar #'(lambda (x)
+				       (funcall #'evaluate `(,function ,x)))
+				   sequence)))
 
 	    (cons '#t t)
 	    (cons '#f nil)
@@ -182,7 +186,9 @@
 	    (branches (cdr expr)))
 	(if (member root *special-forms*)
 	    (evaluate-special-form root branches env)
-	    (let ((root-fn (lookup root env)))
+	    (let ((root-fn (if (consp root)
+			       (evaluate root env)
+			       (lookup root env))))
 	      (cond
 		((functionp root-fn)
 		 (apply root-fn
@@ -215,7 +221,7 @@
 	  (if (equal result :quit)
 	      (return)
 	      (format t "~a~%" result)))
-      (end-of-file (err) (return))
+      (end-of-file () (return))
       (error (err) (format t "~a~%" err))))
   (format t "Bye!"))
 
@@ -228,6 +234,9 @@
 	(end-of-file (err) (return))
 	(error (err) (format t "~a~%" err))))))
 
-(if (>= (length +command-line-args+) 1)
-    (load-script (car +command-line-args+))
-    (repl))
+(defun main ()
+  (if (>= (length +command-line-args+) 1)
+      (load-script (car +command-line-args+))
+      (repl)))
+
+(main)
