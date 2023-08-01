@@ -1,6 +1,8 @@
-(defpackage :cl-scheme
-  (:use :cl))
-(in-package :cl-scheme)
+;;;
+
+(defconstant +command-line-args+
+  (or #+SBCL (cdr *posix-argv*)
+      nil))
 
 (defconstant +quasiquote-symbol+
   (or #+SBCL 'sb-int:quasiquote
@@ -100,8 +102,8 @@
       tree
       (if (eq 'unquote (car tree))
 	  (funcall #'evaluate (cadr tree))
-	  (cons (visit (car tree))
-		(visit (cdr tree))))))
+	  (cons (traverse-quasiquoted (car tree))
+		(traverse-quasiquoted (cdr tree))))))
 
 (defun evaluate-special-form (form args env)
   (case form
@@ -213,7 +215,19 @@
 	  (if (equal result :quit)
 	      (return)
 	      (format t "~a~%" result)))
+      (end-of-file (err) (return))
       (error (err) (format t "~a~%" err))))
   (format t "Bye!"))
 
-(repl)
+(defun load-script (filename)
+  (with-open-file (script filename)
+    (loop
+      (handler-case
+	  (let ((result (evaluate (read script t) *global-env*)))
+	    (format t "~a~%" result))
+	(end-of-file (err) (return))
+	(error (err) (format t "~a~%" err))))))
+
+(if (>= (length +command-line-args+) 1)
+    (load-script (car +command-line-args+))
+    (repl))
