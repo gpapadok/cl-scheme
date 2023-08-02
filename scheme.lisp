@@ -62,6 +62,10 @@
 			   (mapcar #'(lambda (x)
 				       (funcall #'evaluate `(,function ,x)))
 				   sequence)))
+	    (cons 'filter #'(lambda (function sequence)
+			      (remove-if-not #'(lambda (x)
+						 (funcall #'evaluate `(,function ,x)))
+					     sequence)))
 
 	    (cons '#t t)
 	    (cons '#f nil)
@@ -231,7 +235,7 @@
       (handler-case
 	  (let ((result (evaluate (read script t) *global-env*)))
 	    (format t "~a~%" result))
-	(end-of-file (err) (return))
+	(end-of-file () (return))
 	(error (err) (format t "~a~%" err))))))
 
 (defun main ()
