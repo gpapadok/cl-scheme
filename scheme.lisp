@@ -81,6 +81,10 @@
   "Scheme function defined with lambda and define special forms."
   params body env)
 
+(defstruct Macro
+  "Scheme macro defined with define-macro special form."
+  params body env)
+
 (declaim (ftype function evaluate))
 
 (defun create-env (bindings env)
@@ -88,15 +92,28 @@
     for bind in bindings
     collect (cons (car bind) (funcall #'evaluate (cadr bind) env))))
 
+;; TODO: These two could probably be refactored
 (defun create-procedure-env (procedure args enclosing-env)
   (declare (ignore enclosing-env))
   (let ((params (Procedure-params procedure))
 	(env    (Procedure-env procedure)))
-    (append (loop
-	      for sym in params
-	      for val in args
-	      collect (cons sym val))
-	    env)))
+    (cons nil
+	  (append (loop
+		    for sym in params
+		    for val in args
+		    collect (cons sym val))
+		  (cdr env)))))
+
+(defun create-macro-env (macro args enclosing-env)
+  (declare (ignore enclosing-env))
+  (let ((params (Macro-params macro))
+	(env    (Macro-env macro)))
+    (cons nil
+	  (append (loop
+		    for sym in params
+		    for val in args
+		    collect (cons sym val))
+		  (cdr env)))))
 
 (defun evaluate-body (body env)
   (dolist (expression (butlast body)
@@ -105,13 +122,13 @@
 		    env))
     (funcall #'evaluate expression env)))
 
-(defun traverse-quasiquoted (tree)
+(defun traverse-quasiquoted (tree env)
   (if (atom tree)
       tree
       (if (eq 'unquote (car tree))
-	  (funcall #'evaluate (cadr tree))
-	  (cons (traverse-quasiquoted (car tree))
-		(traverse-quasiquoted (cdr tree))))))
+	  (funcall #'evaluate (cadr tree) env)
+	  (cons (traverse-quasiquoted (car tree) env)
+		(traverse-quasiquoted (cdr tree) env)))))
 
 (defun evaluate-special-form (form args env)
   (case form
@@ -181,7 +198,16 @@
     (`(or quasiquote ,+quasiquote-symbol+)
      (if (> (length args) 1)
 	 (error "wrong number of args ~a" (length args)) ; TODO: if-let macro
-	 (traverse-quasiquoted (car args))))
+	 (traverse-quasiquoted (car args) env)))
+    ((define-macro)
+     (progn
+       (push-cdr
+	(cons (caar args)
+	      (make-Macro :params (cdar args)
+			  :body (cdr args)
+			  :env env))
+	env)
+       (caar args)))
     ))
 
 (defun evaluate (expr &optional (env *global-env*))
@@ -206,6 +232,11 @@
 			(body (Procedure-body root-fn))
 			(scope (create-procedure-env root-fn args env)))
 		   (evaluate-body body scope)))
+		((Macro-p root-fn)
+		 (let ((scope (create-macro-env root-fn branches env)))
+		   (evaluate-body
+		    (evaluate-body (Macro-body root-fn) scope)
+		    scope))) ; TODO: Probably separate macro-expansion from evaluation
 		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
