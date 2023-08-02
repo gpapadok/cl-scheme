@@ -23,7 +23,7 @@
     unquote
     mu
     define-macro
-    expect
+    expect ; Not part of specification
     unquote-splicing
     delay
     cons-stream
@@ -76,6 +76,9 @@
 
 (defun lookup (sym env)
   (cdr (assoc sym env)))
+
+(defun update-env (sym value env)
+  (setf (cdr (assoc sym env)) value))
 
 (defstruct Procedure
   "Scheme function defined with lambda and define special forms."
@@ -208,6 +211,12 @@
 			  :env env))
 	env)
        (caar args)))
+    ((set!)
+     (if (null (assoc (car args) env))
+	 (error "~a undefined~%" (car args))
+	 (progn
+	   (update-env (car args) (funcall #'evaluate (cadr args) env) env)
+	   (car args))))
     ))
 
 (defun evaluate (expr &optional (env *global-env*))
@@ -245,7 +254,7 @@
 	(t expr))))
 
 (defun prompt-expr ()
-  (format *query-io* "> ")
+  (format *query-io* "λ> ")
   (force-output *query-io*)
   (read t t))
 
