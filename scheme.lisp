@@ -35,6 +35,8 @@
 (set-dispatch-macro-character #\# #\f #'(lambda (&rest _)
 					  (declare (ignore _)) nil))
 
+(declaim (ftype function evaluate))
+
 (defvar *global-env* nil
   "Interpreter's global environment.")
 
@@ -87,8 +89,6 @@
 (defstruct Macro
   "Scheme macro defined with define-macro special form."
   params body env)
-
-(declaim (ftype function evaluate))
 
 (defun create-env (bindings env)
   (loop
