@@ -68,6 +68,24 @@
 			      (remove-if-not #'(lambda (x)
 						 (funcall #'evaluate `(,function ,x)))
 					     sequence)))
+	    (cons 'apply #'apply)
+	    (cons 'display #'princ) ; TODO: It also prints output
+	    (cons 'displayln #'print)
+	    (cons 'error #'error)
+	    (cons 'exit (constantly :quit))
+	    (cons 'newline #'(lambda () (format t "~%")))
+	    (cons 'print #'print)
+	    ;; Type cheking
+	    (cons 'atom? #'atom)
+	    (cons 'boolean? #'(lambda (x) (or (null x) (eq x t))))
+	    (cons 'integer? #'integerp)
+	    (cons 'list? #'listp)
+	    (cons 'number? #'numberp)
+	    (cons 'null? #'null)
+	    (cons 'pair? #'(lambda (x) (null (listp (cdr x)))))
+	    (cons 'procedure? #'Procedure-p) ; TODO: Probably move this further down
+	    (cons 'string? #'stringp)
+	    (cons 'symbol? #'symbolp)
 
 	    (cons '#t t)
 	    (cons '#f nil)
@@ -252,6 +270,8 @@
 	((symbolp expr)
 	 (lookup expr env))
 	(t expr))))
+
+(push-cdr (cons 'eval #'evaluate) *global-env*)
 
 (defun prompt-expr ()
   (format *query-io* "λ> ")
