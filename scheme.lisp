@@ -83,9 +83,10 @@
 	    (cons 'number? #'numberp)
 	    (cons 'null? #'null)
 	    (cons 'pair? #'(lambda (x) (null (listp (cdr x)))))
-	    (cons 'procedure? #'Procedure-p) ; TODO: Probably move this further down
 	    (cons 'string? #'stringp)
 	    (cons 'symbol? #'symbolp)
+	    ;; General
+	    (cons 'equal? #'equal)
 
 	    (cons '#t t)
 	    (cons '#f nil)
@@ -104,6 +105,8 @@
   "Scheme function defined with lambda and define special forms."
   params body env)
 
+(push-cdr (cons 'procedure? #'Procedure-p) *global-env*)
+
 (defstruct Macro
   "Scheme macro defined with define-macro special form."
   params body env)
@@ -113,28 +116,13 @@
     for bind in bindings
     collect (cons (car bind) (funcall #'evaluate (cadr bind) env))))
 
-;; TODO: These two could probably be refactored
-(defun create-procedure-env (procedure args enclosing-env)
-  (declare (ignore enclosing-env))
-  (let ((params (Procedure-params procedure))
-	(env    (Procedure-env procedure)))
-    (cons nil
-	  (append (loop
-		    for sym in params
-		    for val in args
-		    collect (cons sym val))
-		  (cdr env)))))
-
-(defun create-macro-env (macro args enclosing-env)
-  (declare (ignore enclosing-env))
-  (let ((params (Macro-params macro))
-	(env    (Macro-env macro)))
-    (cons nil
-	  (append (loop
-		    for sym in params
-		    for val in args
-		    collect (cons sym val))
-		  (cdr env)))))
+(defun create-body-env (params env args)
+  (cons nil
+	(append (loop
+		  for sym in params
+		  for val in args
+		  collect (cons sym val))
+		(cdr env))))
 
 (defun evaluate-body (body env)
   (dolist (expression (butlast body)
@@ -243,6 +231,7 @@
 	    (branches (cdr expr)))
 	(if (member root *special-forms*)
 	    (evaluate-special-form root branches env)
+	    ;; TODO: root-fn ugly name
 	    (let ((root-fn (if (consp root)
 			       (evaluate root env)
 			       (lookup root env))))
@@ -257,11 +246,15 @@
 					  (funcall #'evaluate form env))
 				      branches))
 			(body (Procedure-body root-fn))
-			(scope (create-procedure-env root-fn args env)))
+			(scope (create-body-env (Procedure-params root-fn)
+						(Procedure-env root-fn)
+						args)))
 		   (evaluate-body body scope)))
 		((Macro-p root-fn)
-		 (let ((scope (create-macro-env root-fn branches env)))
-		   (evaluate-body
+		 (let ((scope (create-body-env (Macro-params root-fn)
+					       (Macro-env root-fn)
+					       branches)))
+		   (evaluate
 		    (evaluate-body (Macro-body root-fn) scope)
 		    scope))) ; TODO: Probably separate macro-expansion from evaluation
 		(t (error "~a not callable" root))))))
