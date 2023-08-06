@@ -87,6 +87,7 @@
 	    (cons 'symbol? #'symbolp)
 	    ;; General
 	    (cons 'equal? #'equal)
+	    (cons 'string=? #'string=)
 
 	    (cons '#t t)
 	    (cons '#f nil)
@@ -283,12 +284,16 @@
 
 (defun load-script (filename)
   (with-open-file (script filename)
-    (loop
-      (handler-case
-	  (let ((result (evaluate (read script t) *global-env*)))
-	    (format t "~a~%" result))
-	(end-of-file () (return))
-	(error (err) (format t "~a~%" err))))))
+    (let ((result nil))
+      (loop
+	(let ((sexp (read script nil :eof)))
+	  (if (eq sexp :eof)
+	      (progn
+		(format t "~a~%" result)
+		(return))
+	      (handler-case
+		  (setq result (evaluate sexp *global-env*))
+		(error (err) (format t "~a~%" err)))))))))
 
 (defun main ()
   (if (>= (length +command-line-args+) 1)
