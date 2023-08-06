@@ -116,7 +116,7 @@
     for bind in bindings
     collect (cons (car bind) (funcall #'evaluate (cadr bind) env))))
 
-(defun create-body-env (params env args)
+(defun extend-env (params args env)
   (cons nil
 	(append (loop
 		  for sym in params
@@ -231,31 +231,30 @@
 	    (branches (cdr expr)))
 	(if (member root *special-forms*)
 	    (evaluate-special-form root branches env)
-	    ;; TODO: root-fn ugly name
-	    (let ((root-fn (if (consp root)
+	    (let ((callable (if (consp root)
 			       (evaluate root env)
 			       (lookup root env))))
 	      (cond
-		((functionp root-fn)
-		 (apply root-fn
+		((functionp callable)
+		 (apply callable
 			(mapcar #'(lambda (form)
 				    (funcall #'evaluate form env))
 				branches)))
-		((Procedure-p root-fn)
+		((Procedure-p callable)
 		 (let* ((args (mapcar #'(lambda (form)
 					  (funcall #'evaluate form env))
 				      branches))
-			(body (Procedure-body root-fn))
-			(scope (create-body-env (Procedure-params root-fn)
-						(Procedure-env root-fn)
-						args)))
+			(body (Procedure-body callable))
+			(scope (extend-env (Procedure-params callable)
+					   args
+					   (Procedure-env callable))))
 		   (evaluate-body body scope)))
-		((Macro-p root-fn)
-		 (let ((scope (create-body-env (Macro-params root-fn)
-					       (Macro-env root-fn)
-					       branches)))
+		((Macro-p callable)
+		 (let ((scope (extend-env (Macro-params callable)
+					  branches
+					  (Macro-env callable))))
 		   (evaluate
-		    (evaluate-body (Macro-body root-fn) scope)
+		    (evaluate-body (Macro-body callable) scope)
 		    scope))) ; TODO: Probably separate macro-expansion from evaluation
 		(t (error "~a not callable" root))))))
       (cond
