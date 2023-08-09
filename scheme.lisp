@@ -21,12 +21,12 @@
     quasiquote
     ,+quasiquote-symbol+
     unquote
-    mu
+    ;; mu
     define-macro
-    expect ; Not part of specification
+    ;; expect ; Not part of specification
     unquote-splicing
-    delay
-    cons-stream
+    ;; delay
+    ;; cons-stream
     set!)
   "Scheme special forms.")
 
@@ -132,13 +132,33 @@
 		    env))
     (funcall #'evaluate expression env)))
 
+(defun contains-comma-at-p (sexp)
+  (some #'(lambda (x)
+	    (format t "~a~%" x)
+	    (and (consp x) (eq 'unquote-splicing (car x))))
+	sexp))
+
+(defun sym-position (sym sexp)
+  (position sym
+	    sexp
+	    :test #'(lambda (item x)
+		      (and (consp x) (eq item (car x))))))
+
 (defun traverse-quasiquoted (tree env)
   (if (atom tree)
       tree
-      (if (eq 'unquote (car tree))
-	  (funcall #'evaluate (cadr tree) env)
-	  (cons (traverse-quasiquoted (car tree) env)
-		(traverse-quasiquoted (cdr tree) env)))))
+      (cond ((eq 'unquote (car tree)) ; TODO: Figure out how to add , reader macro
+	     (funcall #'evaluate (cadr tree) env))
+	    ((contains-comma-at-p tree)
+	     (let* ((pos (sym-position 'unquote-splicing tree))
+		    (before (subseq tree 0 pos))
+		    (after (subseq tree (1+ pos)))
+		    (tosplice (funcall #'evaluate (cadr (nth pos tree)))))
+	       (append (traverse-quasiquoted before env)
+		       tosplice
+		       (traverse-quasiquoted after env))))
+	    (t (cons (traverse-quasiquoted (car tree) env)
+		     (traverse-quasiquoted (cdr tree) env))))))
 
 (defun evaluate-special-form (form args env)
   (case form
@@ -254,9 +274,11 @@
 		 (let ((scope (extend-env (Macro-params callable)
 					  branches
 					  (Macro-env callable))))
+		   ;; (evaluate-body (Macro-body callable) scope)
 		   (evaluate
 		    (evaluate-body (Macro-body callable) scope)
-		    scope))) ; TODO: Probably separate macro-expansion from evaluation
+		    scope)
+		   )) ; TODO: Probably separate macro-expansion from evaluation
 		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
