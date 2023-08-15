@@ -82,6 +82,8 @@
   ;; 	      (let ((x 4))
   ;; 		(lambda (y) (+ x y))))
   ;; 	    (= 6 (add4 2))))
+  (is-eval (= 12 ((let ((x 2))
+		    (lambda (y) (* x y))) 6)))
   )
 
 (test scope-test
