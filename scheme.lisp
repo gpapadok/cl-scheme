@@ -1,4 +1,4 @@
-;;;
+;;; Scheme in Common Lisp
 
 (defconstant +command-line-args+
   (or #+SBCL (cdr *posix-argv*)
@@ -37,6 +37,9 @@
 
 (declaim (ftype function evaluate))
 
+;; TODO
+;; set-car!, set-cdr!
+
 (defvar *global-env* nil
   "Interpreter's global environment.")
 
@@ -52,22 +55,20 @@
 	    (cons '>= #'>=)
 	    (cons '<= #'<=)
 	    (cons 'abs #'abs)
+	    (cons 'expt #'expt)
+	    (cons 'modulo #'mod)
+	    (cons 'quotient #'floor)
+	    (cons 'remainder #'rem)
 	    (cons 'min #'min)
 	    (cons 'max #'max)
 	    (cons 'cons #'cons)
 	    (cons 'car #'car)
 	    (cons 'cdr #'cdr)
 	    (cons 'list #'list)
+	    (cons 'append #'append)
 	    (cons 'length #'length)
 	    (cons 'print #'print)
-	    (cons 'map #'(lambda (function sequence) ; TODO: Figure out how to use map without quoting
-			   (mapcar #'(lambda (x)
-				       (funcall #'evaluate `(,function ,x)))
-				   sequence)))
-	    (cons 'filter #'(lambda (function sequence)
-			      (remove-if-not #'(lambda (x)
-						 (funcall #'evaluate `(,function ,x)))
-					     sequence)))
+	    (cons 'reduce #'identity) ; TODO: Implement
 	    (cons 'apply #'apply)
 	    (cons 'display #'princ) ; TODO: It also prints output
 	    (cons 'displayln #'print)
@@ -82,12 +83,17 @@
 	    (cons 'list? #'listp)
 	    (cons 'number? #'numberp)
 	    (cons 'null? #'null)
-	    (cons 'pair? #'(lambda (x) (null (listp (cdr x)))))
+	    (cons 'pair? #'(lambda (x) (null (listp (cdr x))))) ; TODO: Doesn't work as expected
 	    (cons 'string? #'stringp)
 	    (cons 'symbol? #'symbolp)
 	    ;; General
+	    (cons 'eq? #'eq)
 	    (cons 'equal? #'equal)
+	    (cons 'not #'not)
 	    (cons 'string=? #'string=)
+	    (cons 'even? #'evenp)
+	    (cons 'odd? #'oddp)
+	    (cons 'zero? #'zerop)
 
 	    (cons '#t t)
 	    (cons '#f nil)
@@ -268,7 +274,7 @@
 			(body (Procedure-body callable))
 			(scope (extend-env (Procedure-params callable)
 					   args
-					   (Procedure-env callable))))
+					   (or (Procedure-env callable) *global-env*))))
 		   (evaluate-body body scope)))
 		((Macro-p callable)
 		 (let ((scope (extend-env (Macro-params callable)
@@ -287,6 +293,20 @@
 	(t expr))))
 
 (push-cdr (cons 'eval #'evaluate) *global-env*)
+
+(evaluate
+ '(define (map op seq)
+   (if (null? seq)
+       seq
+       (cons (op (car seq)) (map op (cdr seq))))))
+
+(evaluate
+ '(define (filter pred seq)
+   (if (null? seq)
+       seq
+       (if (pred (car seq))
+           (cons (car seq) (filter pred (cdr seq)))
+           (myfilter pred (cdr seq))))))
 
 (defun prompt-expr ()
   (format *query-io* "λ> ")
