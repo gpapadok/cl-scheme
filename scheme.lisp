@@ -12,9 +12,12 @@
   `(define
     if
     cond
+    case ; TODO: implement
     and
     or
     let
+    let* ; TODO: implement
+    letrec ; TODO: implement
     begin
     lambda
     quote
@@ -39,6 +42,7 @@
 
 ;; TODO
 ;; set-car!, set-cdr!
+;; closures
 
 (defvar *global-env* nil
   "Interpreter's global environment.")
@@ -168,7 +172,7 @@
 
 (defun evaluate-special-form (form args env)
   (case form
-    ((if)
+    ((if) ; TODO: Should work without else
      (if (= 3 (length args))
 	 (if (funcall #'evaluate (car args) env)
 	     (funcall #'evaluate (cadr args) env)
@@ -205,7 +209,7 @@
 				    env))
 		     env)
 	   (car args))))
-    ((cond)
+    ((cond) ; TODO: Add `else` and `=>`
      (let ((result nil))
        (loop
 	 named cond-loop
@@ -216,14 +220,15 @@
 	      (return-from cond-loop)))
        result))
     ((let)
-     (let ((current-env (append
-			 (create-env (car args) env)
-			 env))
+     (let ((current-env (setf (cdr env)
+			      (append
+			       (create-env (car args) env)
+			       (cdr env))))
 	   (body (cdr args)))
        (evaluate-body body current-env)))
     ((begin)
      (evaluate-body args env))
-    ((lambda)
+    ((lambda) ; TODO: Add argument destructuring
      (make-Procedure :params (car args)
 		     :body (cdr args)
 		     :env env))
