@@ -53,6 +53,17 @@
 	    (define x 1)
 	    (let ((y (+ 10 x)))
 	      (= 11 y))))
+  (is-eval (= 35
+	      (let ((x 2) (y 3))
+		(let ((x 7)
+		      (z (+ x y)))
+		  (* z x)))))
+  ;; Not implemented yet
+  ;; (is-eval (= 70
+  ;; 	      (let ((x 2) (y 3))
+  ;; 		(let* ((x 7)
+  ;; 		       (z (+ x y)))
+  ;; 		  (* z x)))))
   )
 
 (test special-form-test

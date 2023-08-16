@@ -31,6 +31,12 @@
     set!)
   "Scheme special forms.")
 
+(defmacro if-let (binding-form true-expression &optional false-expression)
+  `(let (,binding-form)
+     (if ,(car binding-form)
+	 ,true-expression
+	 ,false-expression)))
+
 ;; Until `#t` and `#f` is implemented correclty
 (set-dispatch-macro-character #\# #\t #'(lambda (&rest _)
 					  (declare (ignore _)) t))
@@ -41,7 +47,8 @@
 
 ;; TODO
 ;; set-car!, set-cdr!
-;; closures
+;; do
+;; named let
 
 (defvar *global-env* nil
   "Interpreter's global environment.")
@@ -112,37 +119,33 @@
 
 (defun evaluate-special-form (form args env)
   (case form
-    ((if) ; TODO: Should work without else
-     (if (= 3 (length args))
+    ((if)
+     (if (<= 2 (length args) 3)
 	 (if (funcall #'evaluate (car args) env)
 	     (funcall #'evaluate (cadr args) env)
 	     (funcall #'evaluate (caddr args) env))
 	 (error "malformed if special form")))
-    ((or)
-     (let ((frst (funcall #'evaluate (car args) env)))
-       (if frst
-	   frst
-	   (when (consp (cdr args))
-	     (funcall #'evaluate
-		      `(or ,@(cdr args)) env)))))
+    ((or) ;; TODO: rename `frst`
+     (if-let (frst (funcall #'evaluate (car args) env))
+       frst
+       (when (consp (cdr args))
+	 (funcall #'evaluate
+		  `(or ,@(cdr args)) env))))
     ((and)
      (let ((frst (funcall #'evaluate (car args) env)))
-       (if (null frst)
-	   frst
-	   (if (consp (cdr args))
-	       (funcall #'evaluate `(and ,@(cdr args)) env)
-	       frst))))
+       (if (and frst (consp (cdr args)))
+	   (funcall #'evaluate `(and ,@(cdr args)) env)
+	   frst)))
     ((define)
      (if (consp (car args))
-	 (progn
-	   (push-cdr
-	    (cons (caar args)
-		  (make-Procedure :params (cdar args)
-				  :body (cdr args)
-				  :env env))
-	    env)
+	 (progn ; Procedure definition
+	   (push-cdr (cons (caar args)
+			   (make-Procedure :params (cdar args)
+					   :body (cdr args)
+					   :env env))
+		     env)
 	   (caar args))
-	 (progn
+	 (progn ; Variable definition
 	   (push-cdr (cons (car args)
 			   (funcall #'evaluate
 				    (cadr args)
@@ -150,22 +153,19 @@
 		     env)
 	   (car args))))
     ((cond) ; TODO: Add `else` and `=>`
-     (let ((result nil))
-       (loop
-	 named cond-loop
-	 for pair in args
-	 ;; TODO: Maybe this can be rewritten
-	 do (when (funcall #'evaluate (car pair) env)
-	      (setq result (funcall #'evaluate (cadr pair) env))
-	      (return-from cond-loop)))
-       result))
+     (loop
+       named cond-form
+       for clause in args
+       do (when (funcall #'evaluate (car clause) env)
+	    (return-from cond-form
+	      ;; TODO: Should work with multiple expressions for each test
+	      (funcall #'evaluate (cadr clause) env)))))
     ((let)
-     (let ((current-env (cons nil
-			      (append
-			       (create-env (car args) env)
-			       (cdr env))))
-	   (body (cdr args)))
-       (evaluate-body body current-env)))
+     (evaluate-body (cdr args) (cons nil
+				     (append
+				      ;; TODO: Rename `create-env`
+				      (create-env (car args) env)
+				      (cdr env)))))
     ((begin)
      (evaluate-body args env))
     ((lambda) ; TODO: Add argument destructuring
@@ -173,28 +173,27 @@
 		     :body (cdr args)
 		     :env env))
     ((quote)
-     (if (> (length args) 1)
-	 (error "wrong number of args ~a" (length args)) ; TODO: if-let macro
-	 (car args)))
+     (if (= (length args) 1)
+	 (car args)
+	 (error "wrong number of args to quote: ~a" (length args))))
     (`(or quasiquote ,+quasiquote-symbol+)
-     (if (> (length args) 1)
-	 (error "wrong number of args ~a" (length args)) ; TODO: if-let macro
-	 (traverse-quasiquoted (car args) env)))
+     (if (= (length args) 1)
+	 (traverse-quasiquoted (car args) env)
+	 (error "wrong number of args to quqsiquote: ~a" (length args))))
     ((define-macro)
      (progn
-       (push-cdr
-	(cons (caar args)
-	      (make-Macro :params (cdar args)
-			  :body (cdr args)
-			  :env env))
-	env)
+       (push-cdr (cons (caar args)
+		       (make-Macro :params (cdar args)
+				   :body (cdr args)
+				   :env env))
+		 env)
        (caar args)))
     ((set!)
-     (if (null (assoc (car args) env))
-	 (error "~a undefined~%" (car args))
+     (if (assoc (car args) env)
 	 (progn
 	   (update-env (car args) (funcall #'evaluate (cadr args) env) env)
-	   (car args))))
+	   (car args))
+	 (error "~a undefined~%" (car args))))
     ))
 
 (defun evaluate (expr &optional (env *global-env*))
