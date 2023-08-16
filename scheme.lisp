@@ -24,15 +24,14 @@
     quasiquote
     ,+quasiquote-symbol+
     unquote
-    ;; mu
     define-macro
-    ;; expect ; Not part of specification
     unquote-splicing
     ;; delay
     ;; cons-stream
     set!)
   "Scheme special forms.")
 
+;; Until `#t` and `#f` is implemented correclty
 (set-dispatch-macro-character #\# #\t #'(lambda (&rest _)
 					  (declare (ignore _)) t))
 (set-dispatch-macro-character #\# #\f #'(lambda (&rest _)
@@ -49,15 +48,12 @@
 
 (setq *global-env*
       (list nil ; So we can descructively push inside function
+	    ;; Numeric operations
 	    (cons '+ #'+)
 	    (cons '- #'-)
 	    (cons '* #'*)
 	    (cons '/ #'/)
 	    (cons '= #'=)
-	    (cons '< #'<)
-	    (cons '> #'>)
-	    (cons '>= #'>=)
-	    (cons '<= #'<=)
 	    (cons 'abs #'abs)
 	    (cons 'expt #'expt)
 	    (cons 'modulo #'mod)
@@ -65,19 +61,25 @@
 	    (cons 'remainder #'rem)
 	    (cons 'min #'min)
 	    (cons 'max #'max)
+	    (cons '< #'<)
+	    (cons '> #'>)
+	    (cons '>= #'>=)
+	    (cons '<= #'<=)
+	    (cons 'even? #'evenp)
+	    (cons 'odd? #'oddp)
+	    (cons 'zero? #'zerop)
+	    ;; List operations
 	    (cons 'cons #'cons)
 	    (cons 'car #'car)
 	    (cons 'cdr #'cdr)
 	    (cons 'list #'list)
 	    (cons 'append #'append)
 	    (cons 'length #'length)
-	    (cons 'print #'print)
-	    (cons 'reduce #'identity) ; TODO: Implement
 	    (cons 'apply #'apply)
+	    ;; Printing
+	    (cons 'print #'print)
 	    (cons 'display #'princ) ; TODO: It also prints output
 	    (cons 'displayln #'print)
-	    (cons 'error #'error)
-	    (cons 'exit (constantly :quit))
 	    (cons 'newline #'(lambda () (format t "~%")))
 	    (cons 'print #'print)
 	    ;; Type cheking
@@ -87,18 +89,20 @@
 	    (cons 'list? #'listp)
 	    (cons 'number? #'numberp)
 	    (cons 'null? #'null)
-	    (cons 'pair? #'(lambda (x) (null (listp (cdr x))))) ; TODO: Doesn't work as expected
+	    (cons 'pair? #'(lambda (x) (and (car x) (cdr x) t)))
 	    (cons 'string? #'stringp)
 	    (cons 'symbol? #'symbolp)
+	    (cons 'char? #'characterp)
+	    (cons 'vector? #'vectorp)
+	    ;; (cons 'port? nil)
 	    ;; General
 	    (cons 'eq? #'eq)
 	    (cons 'equal? #'equal)
 	    (cons 'not #'not)
 	    (cons 'string=? #'string=)
-	    (cons 'even? #'evenp)
-	    (cons 'odd? #'oddp)
-	    (cons 'zero? #'zerop)
-
+	    (cons 'error #'error)
+	    (cons 'exit (constantly :quit))
+	    ;;
 	    (cons '#t t)
 	    (cons '#f nil)
 	    ))
@@ -312,6 +316,12 @@
        (if (pred (car seq))
            (cons (car seq) (filter pred (cdr seq)))
            (myfilter pred (cdr seq))))))
+
+(evaluate
+ '(define (reduce op initial seq)
+   (if (null? seq)
+       initial
+       (reduce op (op initial (car seq)) (cdr seq)))))
 
 (defun prompt-expr ()
   (format *query-io* "λ> ")
