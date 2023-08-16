@@ -70,10 +70,13 @@
   "Scheme macro defined with define-macro special form."
   params body env)
 
-(defun create-env (bindings env)
-  (loop
-    for bind in bindings
-    collect (cons (car bind) (funcall #'evaluate (cadr bind) env))))
+(defun extend-env-with-bindings (bindings env)
+  (cons nil
+	(append (loop
+		  for bind in bindings
+		  collect (cons (car bind)
+				(funcall #'evaluate (cadr bind) env)))
+		(cdr env))))
 
 (defun extend-env (params args env)
   (cons nil
@@ -161,11 +164,7 @@
 	      ;; TODO: Should work with multiple expressions for each test
 	      (funcall #'evaluate (cadr clause) env)))))
     ((let)
-     (evaluate-body (cdr args) (cons nil
-				     (append
-				      ;; TODO: Rename `create-env`
-				      (create-env (car args) env)
-				      (cdr env)))))
+     (evaluate-body (cdr args) (extend-env-with-bindings (car args) env)))
     ((begin)
      (evaluate-body args env))
     ((lambda) ; TODO: Add argument destructuring
