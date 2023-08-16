@@ -86,12 +86,13 @@
 		  collect (cons sym val))
 		(cdr env))))
 
+;; TODO: Maybe turn this into macro
 (defun evaluate-body (body env)
-  (dolist (expression (butlast body)
-	   (funcall #'evaluate
-		    (car (last body))
-		    env))
-    (funcall #'evaluate expression env)))
+  (let ((result nil))
+    (loop
+      for expr in body
+      do (setq result (funcall #'evaluate expr env))
+      finally (return result))))
 
 (defun contains-comma-at-p (sexp)
   (some #'(lambda (x)
@@ -197,42 +198,42 @@
 
 (defun evaluate (expr &optional (env *global-env*))
   (if (consp expr)
-      (let ((root     (car expr))
+      (let ((root (car expr)) ; TODO: Rename some variables
 	    (branches (cdr expr)))
 	(if (member root *special-forms*)
 	    (evaluate-special-form root branches env)
-	    (let ((callable (if (consp root)
+	    (let ((operator (if (consp root)
 			       (evaluate root env)
 			       (lookup root env))))
 	      (cond
-		((functionp callable)
-		 (apply callable
+		((functionp operator)
+		 (apply operator
 			(mapcar #'(lambda (form)
 				    (funcall #'evaluate form env))
 				branches)))
-		((Procedure-p callable)
-		 (let* ((args (mapcar #'(lambda (form)
-					  (funcall #'evaluate form env))
-				      branches))
-			(body (Procedure-body callable))
-			(scope (extend-env (Procedure-params callable)
-					   args
-					   (or (Procedure-env callable) *global-env*))))
-		   (evaluate-body body scope)))
-		((Macro-p callable)
-		 (let ((scope (extend-env (Macro-params callable)
+		((Procedure-p operator)
+		 (let ((args (mapcar #'(lambda (form)
+					 (funcall #'evaluate form env))
+				     branches)))
+		   (evaluate-body (Procedure-body operator)
+				  (extend-env
+				   (Procedure-params operator)
+				   args
+				   (or (Procedure-env operator)
+				       *global-env*)))))
+		((Macro-p operator)
+		 (let ((scope (extend-env (Macro-params operator)
 					  branches
-					  (Macro-env callable))))
-		   ;; (evaluate-body (Macro-body callable) scope)
+					  (Macro-env operator))))
+		   ;; (evaluate-body (Macro-body operator) scope)
 		   (evaluate
-		    (evaluate-body (Macro-body callable) scope)
+		    (evaluate-body (Macro-body operator) scope)
 		    scope)
 		   )) ; TODO: Probably separate macro-expansion from evaluation
 		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
-	((symbolp expr)
-	 (lookup expr env))
+	((symbolp expr) (lookup expr env))
 	(t expr))))
 
 (setq *global-env*
