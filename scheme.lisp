@@ -46,67 +46,6 @@
 (defvar *global-env* nil
   "Interpreter's global environment.")
 
-(setq *global-env*
-      (list nil ; So we can descructively push inside function
-	    ;; Numeric operations
-	    (cons '+ #'+)
-	    (cons '- #'-)
-	    (cons '* #'*)
-	    (cons '/ #'/)
-	    (cons '= #'=)
-	    (cons 'abs #'abs)
-	    (cons 'expt #'expt)
-	    (cons 'modulo #'mod)
-	    (cons 'quotient #'floor)
-	    (cons 'remainder #'rem)
-	    (cons 'min #'min)
-	    (cons 'max #'max)
-	    (cons '< #'<)
-	    (cons '> #'>)
-	    (cons '>= #'>=)
-	    (cons '<= #'<=)
-	    (cons 'even? #'evenp)
-	    (cons 'odd? #'oddp)
-	    (cons 'zero? #'zerop)
-	    ;; List operations
-	    (cons 'cons #'cons)
-	    (cons 'car #'car)
-	    (cons 'cdr #'cdr)
-	    (cons 'list #'list)
-	    (cons 'append #'append)
-	    (cons 'length #'length)
-	    (cons 'apply #'apply)
-	    ;; Printing
-	    (cons 'print #'print)
-	    (cons 'display #'princ) ; TODO: It also prints output
-	    (cons 'displayln #'print)
-	    (cons 'newline #'(lambda () (format t "~%")))
-	    (cons 'print #'print)
-	    ;; Type cheking
-	    (cons 'atom? #'atom)
-	    (cons 'boolean? #'(lambda (x) (or (null x) (eq x t))))
-	    (cons 'integer? #'integerp)
-	    (cons 'list? #'listp)
-	    (cons 'number? #'numberp)
-	    (cons 'null? #'null)
-	    (cons 'pair? #'(lambda (x) (and (car x) (cdr x) t)))
-	    (cons 'string? #'stringp)
-	    (cons 'symbol? #'symbolp)
-	    (cons 'char? #'characterp)
-	    (cons 'vector? #'vectorp)
-	    ;; (cons 'port? nil)
-	    ;; General
-	    (cons 'eq? #'eq)
-	    (cons 'equal? #'equal)
-	    (cons 'not #'not)
-	    (cons 'string=? #'string=)
-	    (cons 'error #'error)
-	    (cons 'exit (constantly :quit))
-	    ;;
-	    (cons '#t t)
-	    (cons '#f nil)
-	    ))
-
 (defun push-cdr (obj place)
   (setf (cdr place) (cons obj (cdr place))))
 
@@ -119,8 +58,6 @@
 (defstruct Procedure
   "Scheme function defined with lambda and define special forms."
   params body env)
-
-(push-cdr (cons 'procedure? #'Procedure-p) *global-env*)
 
 (defstruct Macro
   "Scheme macro defined with define-macro special form."
@@ -148,7 +85,6 @@
 
 (defun contains-comma-at-p (sexp)
   (some #'(lambda (x)
-	    (format t "~a~%" x)
 	    (and (consp x) (eq 'unquote-splicing (car x))))
 	sexp))
 
@@ -224,7 +160,7 @@
 	      (return-from cond-loop)))
        result))
     ((let)
-     (let ((current-env (setf (cdr env)
+     (let ((current-env (cons nil
 			      (append
 			       (create-env (car args) env)
 			       (cdr env))))
@@ -301,7 +237,69 @@
 	 (lookup expr env))
 	(t expr))))
 
-(push-cdr (cons 'eval #'evaluate) *global-env*)
+(setq *global-env*
+      (list nil ; So we can descructively push inside function
+	    ;; Numeric operations
+	    (cons '+ #'+)
+	    (cons '- #'-)
+	    (cons '* #'*)
+	    (cons '/ #'/)
+	    (cons '= #'=)
+	    (cons 'abs #'abs)
+	    (cons 'expt #'expt)
+	    (cons 'modulo #'mod)
+	    (cons 'quotient #'floor)
+	    (cons 'remainder #'rem)
+	    (cons 'min #'min)
+	    (cons 'max #'max)
+	    (cons '< #'<)
+	    (cons '> #'>)
+	    (cons '>= #'>=)
+	    (cons '<= #'<=)
+	    (cons 'even? #'evenp)
+	    (cons 'odd? #'oddp)
+	    (cons 'zero? #'zerop)
+	    ;; List operations
+	    (cons 'cons #'cons)
+	    (cons 'car #'car)
+	    (cons 'cdr #'cdr)
+	    (cons 'list #'list)
+	    (cons 'append #'append)
+	    (cons 'length #'length)
+	    (cons 'apply #'apply)
+	    ;; Printing
+	    (cons 'print #'print)
+	    (cons 'display #'princ) ; TODO: It also prints output
+	    (cons 'displayln #'print)
+	    (cons 'newline #'(lambda () (format t "~%")))
+	    (cons 'print #'print)
+	    ;; Type cheking
+	    (cons 'atom? #'atom)
+	    (cons 'boolean? #'(lambda (x) (or (null x) (eq x t))))
+	    (cons 'integer? #'integerp)
+	    (cons 'list? #'listp)
+	    (cons 'number? #'numberp)
+	    (cons 'null? #'null)
+	    (cons 'pair? #'(lambda (x) (and (car x) (cdr x) t)))
+	    (cons 'string? #'stringp)
+	    (cons 'symbol? #'symbolp)
+	    (cons 'char? #'characterp)
+	    (cons 'vector? #'vectorp)
+	    ;; (cons 'port? nil)
+	    ;; General
+	    (cons 'eq? #'eq)
+	    (cons 'equal? #'equal)
+	    (cons 'not #'not)
+	    (cons 'string=? #'string=)
+	    (cons 'error #'error)
+	    (cons 'exit (constantly :quit))
+	    ;;
+	    (cons '#t t)
+	    (cons '#f nil)
+	    ;;
+	    (cons 'eval #'evaluate)
+	    (cons 'procedure? #'Procedure-p)
+	    ))
 
 (evaluate
  '(define (map op seq)

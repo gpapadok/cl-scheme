@@ -76,12 +76,11 @@
 	    (define (adder x)
 		(lambda (y) (+ x y)))
 	    (= 12 ((adder 10) 2))))
-  ;; This fails currently
-  ;; (is-eval (begin
-  ;; 	    (define add4
-  ;; 	      (let ((x 4))
-  ;; 		(lambda (y) (+ x y))))
-  ;; 	    (= 6 (add4 2))))
+  (is-eval (begin
+	    (define add4
+	      (let ((x 4))
+		(lambda (y) (+ x y))))
+	    (= 6 (add4 2))))
   (is-eval (= 12 ((let ((x 2))
 		    (lambda (y) (* x y))) 6)))
   )
