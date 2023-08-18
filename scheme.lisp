@@ -105,21 +105,19 @@
 	    :test #'(lambda (item x)
 		      (and (consp x) (eq item (car x))))))
 
-(defun traverse-quasiquoted (tree env)
-  (if (atom tree)
-      tree
-      (cond ((eq 'unquote (car tree)) ; TODO: Figure out how to add , reader macro
-	     (funcall #'evaluate (cadr tree) env))
-	    ((contains-comma-at-p tree)
-	     (let* ((pos (sym-position 'unquote-splicing tree))
-		    (before (subseq tree 0 pos))
-		    (after (subseq tree (1+ pos)))
-		    (tosplice (funcall #'evaluate (cadr (nth pos tree)))))
-	       (append (traverse-quasiquoted before env)
-		       tosplice
-		       (traverse-quasiquoted after env))))
-	    (t (cons (traverse-quasiquoted (car tree) env)
-		     (traverse-quasiquoted (cdr tree) env))))))
+(defun unquote-quasiquoted (form env)
+  (if (atom form)
+      form
+      (cond ((eq 'unquote (car form)) ; TODO: Figure out how to add , reader macro
+	     (funcall #'evaluate (cadr form) env))
+	    ((contains-comma-at-p form)
+	     (let ((pos (sym-position 'unquote-splicing form)))
+	       (append (unquote-quasiquoted (subseq form 0 pos) env)
+		       (funcall #'evaluate (cadr (nth pos form)))
+		       (unquote-quasiquoted (subseq form (1+ pos)) env))))
+	    (:else
+	     (cons (unquote-quasiquoted (car form) env)
+		   (unquote-quasiquoted (cdr form) env))))))
 
 (defun evaluate-special-form (form args env)
   (case form
@@ -178,7 +176,7 @@
 	 (error "wrong number of args to quote: ~a" (length args))))
     (`(or quasiquote ,+quasiquote-symbol+)
      (if (= (length args) 1)
-	 (traverse-quasiquoted (car args) env)
+	 (unquote-quasiquoted (car args) env)
 	 (error "wrong number of args to quqsiquote: ~a" (length args))))
     ((define-macro)
      (progn
