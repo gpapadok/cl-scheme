@@ -62,9 +62,20 @@
 (defun update-env (sym value env)
   (setf (cdr (assoc sym env)) value))
 
-(defstruct Procedure
-  "Scheme function defined with lambda and define special forms."
-  params body env)
+(defun create-procedure (params body proc-env)
+  (cons
+   'procedure
+   (lambda (args &optional (env *global-env*))
+     (evaluate-body body
+		    (extend-env
+		     params
+		     (mapcar #'(lambda (form)
+				 (funcall #'evaluate form env))
+			     args)
+		     proc-env)))))
+
+(defun procedurep (item)
+  (eq 'procedure (car item)))
 
 (defstruct Macro
   "Scheme macro defined with define-macro special form."
@@ -142,9 +153,9 @@
      (if (consp (car args))
 	 (progn ; Procedure definition
 	   (push-cdr (cons (caar args)
-			   (make-Procedure :params (cdar args)
-					   :body (cdr args)
-					   :env env))
+			   (create-procedure (cdar args)
+					     (cdr args)
+					     env))
 		     env)
 	   (caar args))
 	 (progn ; Variable definition
@@ -167,9 +178,7 @@
     ((begin)
      (evaluate-body args env))
     ((lambda) ; TODO: Add argument destructuring
-     (make-Procedure :params (car args)
-		     :body (cdr args)
-		     :env env))
+     (create-procedure (car args) (cdr args) env))
     ((quote)
      (if (= (length args) 1)
 	 (car args)
@@ -209,16 +218,8 @@
 			(mapcar #'(lambda (form)
 				    (funcall #'evaluate form env))
 				branches)))
-		((Procedure-p operator)
-		 (let ((args (mapcar #'(lambda (form)
-					 (funcall #'evaluate form env))
-				     branches)))
-		   (evaluate-body (Procedure-body operator)
-				  (extend-env
-				   (Procedure-params operator)
-				   args
-				   (or (Procedure-env operator)
-				       *global-env*)))))
+		((procedurep operator)
+		 (funcall (cdr operator) branches env))
 		((Macro-p operator)
 		 (let ((scope (extend-env (Macro-params operator)
 					  branches
