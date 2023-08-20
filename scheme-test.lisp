@@ -121,6 +121,9 @@
   )
 
 (test macro-test
+  (is-eval (begin
+	    (define-macro (inc x) `(+ 1 (unquote x)))
+	    (= 2 (inc 1))))
   )
 
 (test higher-order-functions-test
