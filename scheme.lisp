@@ -43,7 +43,9 @@
 (set-dispatch-macro-character #\# #\f #'(lambda (&rest _)
 					  (declare (ignore _)) nil))
 
-(declaim (ftype function evaluate))
+(declaim (ftype function evaluate)
+	 (ftype function evaluate-body)
+	 (ftype function extend-env))
 
 ;; TODO
 ;; set-car!, set-cdr!
@@ -75,11 +77,20 @@
 		     proc-env)))))
 
 (defun procedurep (item)
-  (eq 'procedure (car item)))
+  (and (consp item) (eq 'procedure (car item))))
 
-(defstruct Macro
-  "Scheme macro defined with define-macro special form."
-  params body env)
+(defun create-macro (params body macro-env)
+  (cons
+   'macro
+   (lambda (args &optional (env *global-env*))
+     (evaluate
+      (evaluate-body body (extend-env params
+				      args
+				      macro-env))
+      env)))) ; TODO: Probably separate macro-expansion from evaluation
+
+(defun macrop (item)
+  (and (consp item) (eq 'macro (car item))))
 
 (defun extend-env-with-bindings (bindings env)
   (cons nil
@@ -190,9 +201,7 @@
     ((define-macro)
      (progn
        (push-cdr (cons (caar args)
-		       (make-Macro :params (cdar args)
-				   :body (cdr args)
-				   :env env))
+		       (create-macro (cdar args) (cdr args) env))
 		 env)
        (caar args)))
     ((set!)
@@ -210,25 +219,16 @@
 	(if (member root *special-forms*)
 	    (evaluate-special-form root branches env)
 	    (let ((operator (if (consp root)
-			       (evaluate root env)
-			       (lookup root env))))
+				(evaluate root env)
+				(lookup root env))))
 	      (cond
 		((functionp operator)
 		 (apply operator
 			(mapcar #'(lambda (form)
 				    (funcall #'evaluate form env))
 				branches)))
-		((procedurep operator)
+		((or (procedurep operator) (macrop operator))
 		 (funcall (cdr operator) branches env))
-		((Macro-p operator)
-		 (let ((scope (extend-env (Macro-params operator)
-					  branches
-					  (Macro-env operator))))
-		   ;; (evaluate-body (Macro-body operator) scope)
-		   (evaluate
-		    (evaluate-body (Macro-body operator) scope)
-		    scope)
-		   )) ; TODO: Probably separate macro-expansion from evaluation
 		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
@@ -296,7 +296,7 @@
 	    (cons '#f nil)
 	    ;;
 	    (cons 'eval #'evaluate)
-	    (cons 'procedure? #'Procedure-p)
+	    (cons 'procedure? #'procedurep)
 	    ))
 
 (evaluate
