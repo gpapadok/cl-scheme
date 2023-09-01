@@ -108,13 +108,11 @@
 		  collect (cons sym val))
 		(cdr env))))
 
-;; TODO: Maybe turn this into macro
 (defun evaluate-body (body env)
-  (let ((result nil))
-    (loop
-      for expr in body
-      do (setq result (funcall #'evaluate expr env))
-      finally (return result))))
+  (dolist (expr
+	   (butlast body)
+	   (funcall #'evaluate (car (last body)) env))
+    (funcall #'evaluate expr env)))
 
 (defun contains-comma-at-p (sexp)
   (some #'(lambda (x)
