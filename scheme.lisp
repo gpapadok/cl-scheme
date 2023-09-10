@@ -16,7 +16,7 @@
     and
     or
     let
-    let* ; TODO: implement
+    let*
     letrec ; TODO: implement
     begin
     lambda
@@ -99,6 +99,17 @@
 		  collect (cons (car bind)
 				(funcall #'evaluate (cadr bind) env)))
 		(cdr env))))
+
+(defun extend-env-with-bindings* (bindings env)
+  (if-let (bind (car bindings))
+    (extend-env-with-bindings*
+     (cdr bindings)
+     (append
+      (list nil
+	    (cons (car bind)
+		  (funcall #'evaluate (cadr bind) env)))
+      (cdr env)))
+    env))
 
 (defun extend-env (params args env)
   (cons nil
@@ -183,7 +194,11 @@
 	      ;; TODO: Should work with multiple expressions for each test
 	      (funcall #'evaluate (cadr clause) env)))))
     ((let)
-     (evaluate-body (cdr args) (extend-env-with-bindings (car args) env)))
+     (evaluate-body (cdr args)
+		    (extend-env-with-bindings (car args) env)))
+    ((let*)
+     (evaluate-body (cdr args)
+		    (extend-env-with-bindings* (car args) env)))
     ((begin)
      (evaluate-body args env))
     ((lambda) ; TODO: Add argument destructuring

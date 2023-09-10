@@ -58,12 +58,16 @@
 		(let ((x 7)
 		      (z (+ x y)))
 		  (* z x)))))
-  ;; Not implemented yet
-  ;; (is-eval (= 70
-  ;; 	      (let ((x 2) (y 3))
-  ;; 		(let* ((x 7)
-  ;; 		       (z (+ x y)))
-  ;; 		  (* z x)))))
+  (is-eval (= 2
+	      (let ((x 1))
+		(let ((x 10)
+		      (y (+ x 1)))
+		  y))))
+  (is-eval (= 70
+	      (let ((x 2) (y 3))
+		(let* ((x 7)
+		       (z (+ x y)))
+		  (* z x)))))
   )
 
 (test special-form-test
