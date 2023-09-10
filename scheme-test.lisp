@@ -131,3 +131,18 @@
   (is-eval (equal? '(2 4 6) (filter even? '(1 2 3 4 5 6 7))))
   (is-eval (= 21 (reduce + 0 '(1 2 3 4 5 6))))
   )
+
+(test case-test
+  (is-eval (equal? 'composite
+		   (case (* 2 3)
+		     ((2 3 5 7) 'prime)
+		     ((1 4 6 8 9) 'composite))))
+  (is-eval (null? (case (car '(c d))
+		   ((a) 'a)
+		   ((b) 'b))))
+  (is-eval (equal? 'consonant
+		   (case (car '(c d))
+		     ((a e i o u) 'vowel)
+		     ((w y) 'semivowel)
+		     (else 'consonant))))
+  )

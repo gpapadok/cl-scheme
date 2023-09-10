@@ -12,7 +12,7 @@
   `(define
     if
     cond
-    case ; TODO: implement
+    case
     and
     or
     let
@@ -208,6 +208,15 @@
 	   (update-env (car args) (funcall #'evaluate (cadr args) env) env)
 	   (car args))
 	 (error "~a undefined~%" (car args))))
+    ((case)
+     (let ((test (funcall #'evaluate (car args))))
+       (loop
+	 named case-form
+	 for clause in (cdr args)
+	 do (when (or (eql 'else (car clause)) (member test (car clause)))
+	      (return-from case-form
+		;; TODO: This should work for multiple expressions too
+		(funcall #'evaluate (cadr clause) env))))))
     ))
 
 (defun evaluate (expr &optional (env *global-env*))
