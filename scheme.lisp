@@ -1,9 +1,5 @@
 ;;; Scheme in Common Lisp
 
-(defconstant +command-line-args+
-  (or #+SBCL (cdr *posix-argv*)
-      nil))
-
 (defconstant +quasiquote-symbol+
   (or #+SBCL 'sb-int:quasiquote
       nil))
@@ -369,10 +365,3 @@
 	      (handler-case
 		  (setq result (evaluate sexp *global-env*))
 		(error (err) (format t "~a~%" err)))))))))
-
-(defun main ()
-  (if (>= (length +command-line-args+) 1)
-      (load-script (car +command-line-args+))
-      (repl)))
-
-(main)
