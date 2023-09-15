@@ -150,3 +150,14 @@
 		     ((w y) 'semivowel)
 		     (else 'consonant))))
   )
+
+(test vector-test
+  (is-eval (let ((v (make-vector 4)))
+	     (and (vector? v)
+		  (equal? #(0 0 0 0) v))))
+  (is-eval (begin
+	    (let ((v (make-vector 3 2)))
+	      (and (equal? #(2 2 2) v)
+		   (vector-set! v 1 3)
+		   (equal? #(2 3 2) v)))))
+  )

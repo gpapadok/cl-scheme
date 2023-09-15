@@ -250,7 +250,7 @@
 		(t (error "~a not callable" root))))))
       (cond
 	((keywordp expr) expr)
-	((symbolp expr) (lookup expr env))
+	((symbolp expr) (lookup expr env)) ; TODO: Error on undefined symbol
 	(t expr))))
 
 (setq *global-env*
@@ -301,10 +301,14 @@
 	    (cons 'symbol? #'symbolp)
 	    (cons 'char? #'characterp)
 	    (cons 'vector? #'vectorp)
+	    (cons 'make-vector #'(lambda (size &optional (v 0))
+				   (make-array size :initial-element v)))
+	    (cons 'vector-set! #'(lambda (vec pos v)
+				   (setf (aref vec pos) v)))
 	    ;; (cons 'port? nil)
 	    ;; General
 	    (cons 'eq? #'eq)
-	    (cons 'equal? #'equal)
+	    (cons 'equal? #'equalp)
 	    (cons 'not #'not)
 	    (cons 'string=? #'string=)
 	    (cons 'error #'error)
@@ -316,26 +320,6 @@
 	    (cons 'eval #'evaluate)
 	    (cons 'procedure? #'procedurep)
 	    ))
-
-(evaluate
- '(define (map op seq) ; TODO: This should work for multiple sequences
-   (if (null? seq)
-       seq
-       (cons (op (car seq)) (map op (cdr seq))))))
-
-(evaluate
- '(define (filter pred seq)
-   (if (null? seq)
-       seq
-       (if (pred (car seq))
-           (cons (car seq) (filter pred (cdr seq)))
-           (filter pred (cdr seq))))))
-
-(evaluate
- '(define (reduce op init-value seq)
-   (if (null? seq)
-       init-value
-       (reduce op (op init-value (car seq)) (cdr seq)))))
 
 (defun prompt-expr ()
   (format *query-io* "λ> ")
@@ -365,3 +349,5 @@
 	      (handler-case
 		  (setq result (evaluate sexp *global-env*))
 		(error (err) (format t "~a~%" err)))))))))
+
+(load-script "core.scm")
