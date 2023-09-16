@@ -5,8 +5,8 @@
       nil))
 
 (defparameter *special-forms*
-  `(define
-    if
+  `(if
+    define
     cond
     case
     and

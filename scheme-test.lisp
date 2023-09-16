@@ -161,3 +161,11 @@
 		   (vector-set! v 1 3)
 		   (equal? #(2 3 2) v)))))
   )
+
+(test set-test
+  (is-eval (let ((seq '(1 2 3)))
+	     (and (set-car! seq 0)
+		  (equal? seq '(0 2 3))
+		  (set-cdr! seq '(4 5))
+		  (equal? seq '(0 4 5)))))
+  )
