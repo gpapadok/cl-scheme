@@ -24,7 +24,9 @@
     unquote-splicing
     ;; delay
     ;; cons-stream
-    set!)
+    set!
+    set-car!
+    set-cdr!)
   "Scheme special forms.")
 
 (defmacro if-let (binding-form true-expression &optional false-expression)
@@ -33,18 +35,22 @@
 	 ,true-expression
 	 ,false-expression)))
 
-;; Until `#t` and `#f` is implemented correclty
-(set-dispatch-macro-character #\# #\t #'(lambda (&rest _)
-					  (declare (ignore _)) t))
-(set-dispatch-macro-character #\# #\f #'(lambda (&rest _)
-					  (declare (ignore _)) nil))
+(set-dispatch-macro-character #\# #\t #'(lambda (stream subchar arg)
+					  (declare (ignore stream
+							   subchar
+							   arg))
+					  t))
+(set-dispatch-macro-character #\# #\f #'(lambda (stream subchar arg)
+					  (declare (ignore stream
+							   subchar
+							   arg))
+					  nil))
 
 (declaim (ftype function evaluate)
 	 (ftype function evaluate-body)
 	 (ftype function extend-env))
 
 ;; TODO
-;; set-car!, set-cdr!
 ;; do
 ;; named let
 
@@ -213,12 +219,28 @@
 		       (create-macro (cdar args) (cdr args) env))
 		 env)
        (caar args)))
-    ((set!)
+    ((set!) ; TODO: Correct error handling
      (if (assoc (car args) env)
 	 (progn
 	   (update-env (car args) (funcall #'evaluate (cadr args) env) env)
 	   (car args))
 	 (error "~a undefined~%" (car args))))
+    ((set-car!)
+     (if-let (val (lookup (car args) env))
+       (if (consp val)
+	   (update-env (car args)
+		       (cons (funcall #'evaluate (cadr args) env)
+			     (cdr val))
+		       env)
+	   (error "~a not a list~%" (car args)))))
+    ((set-cdr!)
+     (if-let (val (lookup (car args) env))
+       (if (consp val)
+	   (update-env (car args)
+		       (cons (car val)
+			     (funcall #'evaluate (cadr args) env))
+		       env)
+	   (error "~a not a list~%" (car args)))))
     ((case)
      (let ((test (funcall #'evaluate (car args))))
        (loop
