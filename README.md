@@ -5,7 +5,7 @@ This implementation is a subset of [r5rs.pdf](https://conservatory.scheme.org/sc
 
 Run with:
 ```
-sbcl --script scheme.lisp
+sbcl --script run.lisp
 ```
 
 ## Examples
