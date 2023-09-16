@@ -7,5 +7,5 @@
       nil))
 
 (if (>= (length +command-line-args+) 1)
-      (scm:load-script (car +command-line-args+))
-      (scm:repl))
+      (load-script (car +command-line-args+))
+      (repl))

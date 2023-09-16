@@ -225,7 +225,7 @@
 	   (update-env (car args) (funcall #'evaluate (cadr args) env) env)
 	   (car args))
 	 (error "~a undefined~%" (car args))))
-    ((set-car!)
+    ((set-car!) ; TODO: Maybe these don't have to be special forms
      (if-let (val (lookup (car args) env))
        (if (consp val)
 	   (update-env (car args)
@@ -348,6 +348,20 @@
   (force-output *query-io*)
   (read t t))
 
+(defun load-script (filename &key quiet)
+  (with-open-file (script filename)
+    (let ((result nil))
+      (loop
+	(let ((sexp (read script nil :eof)))
+	  (if (eq sexp :eof)
+	      (progn
+		(when (null quiet)
+		  (format t "~a~%" result))
+		(return))
+	      (handler-case
+		  (setq result (evaluate sexp *global-env*))
+		(error (err) (format t "~a~%" err)))))))))
+
 (defun repl ()
   (loop
     (handler-case
@@ -359,17 +373,4 @@
       (error (err) (format t "~a~%" err))))
   (format t "Bye!"))
 
-(defun load-script (filename)
-  (with-open-file (script filename)
-    (let ((result nil))
-      (loop
-	(let ((sexp (read script nil :eof)))
-	  (if (eq sexp :eof)
-	      (progn
-		(format t "~a~%" result)
-		(return))
-	      (handler-case
-		  (setq result (evaluate sexp *global-env*))
-		(error (err) (format t "~a~%" err)))))))))
-
-(load-script "core.scm")
+(load-script "core.scm" :quiet t)
