@@ -1,7 +1,7 @@
 * Scheme in Common Lisp
 
 A Scheme written in Common Lisp to take advantage of the built-in tools Lisp offers to read and evaluate structured expressions.
-This implementation is a subset of [[r5rs.pdf][https://conservatory.scheme.org/schemers/Documents/Standards/R5RS/r5rs.pdf]].
+This implementation is a subset of [[https://conservatory.scheme.org/schemers/Documents/Standards/R5RS/r5rs.pdf][r5rs.pdf]].
 Tested and developed only with Steel Bank Common Lisp.
 
 Run with:
