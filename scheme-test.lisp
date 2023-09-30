@@ -19,6 +19,7 @@
   (is-eval (= 1 (abs -1)))
   (is-eval (>= 3 2 1))
   (is-eval (< 3 (max 1 2 4)))
+  (is-eval (> 4 (min 1 6 7)))
   )
 
 (test list-test
@@ -168,4 +169,12 @@
 		  (equal? seq '(0 2 3))
 		  (set-cdr! seq '(4 5))
 		  (equal? seq '(0 4 5)))))
+      )
+
+(test do-test
+  (is-eval (let ((x 1))
+	     (= (do ((i 1 (+ i 1)))
+		    ((> i 10) x)
+		  (set! x (+ i x)))
+		56)))
   )

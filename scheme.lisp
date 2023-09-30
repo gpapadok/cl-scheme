@@ -26,7 +26,8 @@
     ;; cons-stream
     set!
     set-car!
-    set-cdr!)
+    set-cdr!
+    do)
   "Scheme special forms.")
 
 (defmacro if-let (binding-form true-expression &optional false-expression)
@@ -250,6 +251,23 @@
 	      (return-from case-form
 		;; TODO: This should work for multiple expressions too
 		(funcall #'evaluate (cadr clause) env))))))
+    ((do)
+     (let* ((varlist (car args))
+	    (endlist (second args))
+	    (body (cddr args))
+	    (params (mapcar #'car varlist))
+	    (args (mapcar #'second varlist)))
+       (do ((doenv (extend-env params args env)
+		   (extend-env params
+			       (mapcar #'(lambda (lst)
+					   (funcall #'evaluate
+						    (third lst)
+						    doenv))
+				       varlist)
+			       doenv)))
+	   ((evaluate (car endlist) doenv)
+	    (evaluate-body (cdr endlist) doenv))
+	 (evaluate-body body doenv))))
     ))
 
 (defun evaluate (expr &optional (env *global-env*))
