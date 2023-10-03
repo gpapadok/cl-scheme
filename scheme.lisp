@@ -259,14 +259,17 @@
 	    (body (cddr args))
 	    (params (mapcar #'car varlist))
 	    (args (mapcar #'second varlist)))
-       (do ((doenv (extend-env params args env)
-		   (extend-env params
-			       (mapcar #'(lambda (lst)
-					   (funcall #'evaluate
-						    (third lst)
-						    doenv))
-				       varlist)
-			       doenv)))
+       (do ((doenv (extend-env params
+			       (mapcar #'(lambda (arg)
+					   (evaluate arg env))
+				       args)
+			       env)
+		   (extend-env-with-bindings
+		    (->> varlist
+		      (remove-if-not #'third)
+		      (mapcar #'(lambda (lst)
+				  (list (car lst) (third lst)))))
+		    doenv)))
 	   ((evaluate (car endlist) doenv)
 	    (evaluate-body (cdr endlist) doenv))
 	 (evaluate-body body doenv))))
