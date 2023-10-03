@@ -1,4 +1,6 @@
 ;;; Scheme in Common Lisp
+(ql:quickload :arrow-macros)
+(use-package :arrow-macros)
 
 (defconstant +quasiquote-symbol+
   (or #+SBCL 'sb-int:quasiquote
