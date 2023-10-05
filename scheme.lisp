@@ -4,32 +4,6 @@
 
 (load "special-forms.lisp")
 
-(defparameter *special-forms*
-  `(if
-    define
-    cond
-    case
-    and
-    or
-    let
-    let*
-    letrec ; TODO: implement
-    begin
-    lambda
-    quote
-    quasiquote
-    ,+quasiquote-symbol+
-    unquote
-    define-macro
-    unquote-splicing
-    ;; delay
-    ;; cons-stream
-    set!
-    set-car!
-    set-cdr!
-    do)
-  "Scheme special forms.")
-
 (set-dispatch-macro-character #\# #\t #'(lambda (stream subchar arg)
 					  (declare (ignore stream
 							   subchar
@@ -138,7 +112,7 @@
 		   (unquote-quasiquoted (cdr form) env))))))
 
 (defun evaluate-special-form (form args env)
-  (if-let (eval-op (lookup form +special-forms+))
+  (if-let (eval-op (lookup form *special-forms*))
     (funcall eval-op args env)
     (error "Form ~a not implemented~%" form)))
 
@@ -146,7 +120,7 @@
   (if (consp expr)
       (let ((root (car expr)) ; TODO: Rename some variables
 	    (branches (cdr expr)))
-	(if (member root *special-forms*)
+	(if (member root (mapcar #'car *special-forms*))
 	    (evaluate-special-form root branches env)
 	    (let ((operator (if (consp root)
 				(evaluate root env)

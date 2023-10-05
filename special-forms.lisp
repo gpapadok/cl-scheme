@@ -1,4 +1,24 @@
 
+(declaim (ftype function evaluate)
+	 (ftype function evaluate-body)
+	 (ftype function extend-env))
+
+(defparameter *special-forms*
+  nil)
+
+(defmacro defspecial (name lambda-list &body body)
+  "Defines a special form evaluation function and pushes it in
+the global special form alist"
+  (let ((fn-name (read-from-string
+		  (concatenate 'string "eval-" (string name)))))
+    `(progn
+       (defun ,fn-name
+	 ,lambda-list
+	 ,@body)
+
+       (push (cons ',name #',fn-name)
+	     *special-forms*))))
+
 (defun lookup (sym env)
   (cdr (assoc sym env)))
 
@@ -18,14 +38,14 @@
 	 ,true-expression
 	 ,false-expression)))
 
-(defun eval-if (args env)
+(defspecial if (args env)
   (if (<= 2 (length args) 3)
       (if (evaluate (car args) env)
 	  (evaluate (cadr args) env)
 	  (evaluate (caddr args) env))
       (error "malformed if special form")))
 
-(defun eval-or (args env)
+(defspecial or (args env)
   ;; TODO: rename `frst`
   (if-let (frst (evaluate (car args) env))
     frst
@@ -33,13 +53,13 @@
       (funcall #'evaluate
 	       `(or ,@(cdr args)) env))))
 
-(defun eval-and (args env)
+(defspecial and (args env)
   (let ((frst (evaluate (car args) env)))
     (if (and frst (consp (cdr args)))
 	(evaluate `(and ,@(cdr args)) env)
 	frst)))
 
-(defun eval-define (args env)
+(defspecial define (args env)
   (if (consp (car args))
       (progn				; Procedure definition
 	(push-cdr (cons (caar args)
@@ -56,7 +76,7 @@
 		  env)
 	(car args))))
 
-(defun eval-cond (args env)
+(defspecial cond (args env)
   (loop
     named cond-form
     for clause in args
@@ -65,46 +85,47 @@
 	   ;; TODO: Should work with multiple expressions for each test
 	   (evaluate (cadr clause) env)))))
 
-(defun eval-let (args env)
+(defspecial let (args env)
   (evaluate-body (cdr args)
 		 (extend-env-with-bindings (car args) env)))
 
-(defun eval-let* (args env)
+(defspecial let* (args env)
   (evaluate-body (cdr args)
 		 (extend-env-with-bindings* (car args) env)))
 
-(defun eval-begin (args env)
+(defspecial begin (args env)
   (evaluate-body args env))
 
-(defun eval-lambda (args env)
+(defspecial lambda (args env)
   (create-procedure (car args) (cdr args) env))
 
-(defun eval-quote (args env)
+(defspecial quote (args env)
   (declare (ignore env))
   (if (= (length args) 1)
       (car args)
       (error "wrong number of args to quote: ~a" (length args))))
 
-(defun eval-quasiquote (args env)
+(defspecial quasiquote (args env)
   (if (= (length args) 1)
       (unquote-quasiquoted (car args) env)
       (error "wrong number of args to quqsiquote: ~a" (length args))))
+;; Implementation specific quasiquote symbol
+(push (cons +quasiquote-symbol+ #'eval-quasiquote) *special-forms*)
 
-(defun eval-define-macro (args env)
-  (progn
-    (push-cdr (cons (caar args)
-		    (create-macro (cdar args) (cdr args) env))
-	      env)
-    (caar args)))
+(defspecial define-macro (args env)
+  (push-cdr (cons (caar args)
+		  (create-macro (cdar args) (cdr args) env))
+	    env)
+  (caar args))
 
-(defun eval-set! (args env)
+(defspecial set! (args env)
   (if (assoc (car args) env)
       (progn
 	(update-env (car args) (evaluate (cadr args) env) env)
 	(car args))
       (error "~a undefined~%" (car args))))
 
-(defun eval-set-car! (args env)
+(defspecial set-car! (args env)
   (if-let (val (lookup (car args) env))
     (if (consp val)
 	(update-env (car args)
@@ -113,7 +134,7 @@
 		    env)
 	(error "~a not a list~%" (car args)))))
 
-(defun eval-set-cdr! (args env)
+(defspecial set-cdr! (args env)
   (if-let (val (lookup (car args) env))
     (if (consp val)
 	(update-env (car args)
@@ -122,7 +143,7 @@
 		    env)
 	(error "~a not a list~%" (car args)))))
 
-(defun eval-case (args env)
+(defspecial case (args env)
   (let ((test (evaluate (car args))))
     (loop
       named case-form
@@ -132,7 +153,7 @@
 	     ;; TODO: This should work for multiple expressions too
 	     (evaluate (cadr clause) env))))))
 
-(defun eval-do (args env)
+(defspecial do (args env)
   (let* ((varlist (car args))
 	 (endlist (second args))
 	 (body (cddr args))
@@ -152,24 +173,3 @@
 	((evaluate (car endlist) doenv)
 	 (evaluate-body (cdr endlist) doenv))
       (evaluate-body body doenv))))
-
-(defparameter +special-forms+
-  (list
-   (cons 'if #'eval-if)
-   (cons 'or #'eval-or)
-   (cons 'and #'eval-and)
-   (cons 'define #'eval-define)
-   (cons 'cond #'eval-cond)
-   (cons 'let #'eval-let)
-   (cons 'let* #'eval-let*)
-   (cons 'begin #'eval-begin)
-   (cons 'lambda #'eval-lambda)
-   (cons 'quote #'eval-quote)
-   (cons 'quasiquote #'eval-quasiquote)
-   (cons +quasiquote-symbol+ #'eval-quasiquote)
-   (cons 'define-macro #'eval-define-macro)
-   (cons 'set! #'eval-set!)
-   (cons 'set-car! #'eval-set-car!)
-   (cons 'set-cdr! #'eval-set-cdr!)
-   (cons 'case #'eval-case)
-   (cons 'do #'eval-do)))
