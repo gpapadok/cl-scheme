@@ -2,9 +2,7 @@
 (ql:quickload :arrow-macros)
 (use-package :arrow-macros)
 
-(defconstant +quasiquote-symbol+
-  (or #+SBCL 'sb-int:quasiquote
-      nil))
+(load "special-forms.lisp")
 
 (defparameter *special-forms*
   `(if
@@ -32,12 +30,6 @@
     do)
   "Scheme special forms.")
 
-(defmacro if-let (binding-form true-expression &optional false-expression)
-  `(let (,binding-form)
-     (if ,(car binding-form)
-	 ,true-expression
-	 ,false-expression)))
-
 (set-dispatch-macro-character #\# #\t #'(lambda (stream subchar arg)
 					  (declare (ignore stream
 							   subchar
@@ -54,7 +46,6 @@
 	 (ftype function extend-env))
 
 ;; TODO
-;; do
 ;; named let
 
 (defvar *global-env* nil
@@ -62,9 +53,6 @@
 
 (defun push-cdr (obj place)
   (setf (cdr place) (cons obj (cdr place))))
-
-(defun lookup (sym env)
-  (cdr (assoc sym env)))
 
 (defun update-env (sym value env)
   (setf (cdr (assoc sym env)) value))
@@ -124,12 +112,6 @@
 		  collect (cons sym val))
 		(cdr env))))
 
-(defun evaluate-body (body env)
-  (dolist (expr
-	   (butlast body)
-	   (funcall #'evaluate (car (last body)) env))
-    (funcall #'evaluate expr env)))
-
 (defun contains-comma-at-p (sexp)
   (some #'(lambda (x)
 	    (and (consp x) (eq 'unquote-splicing (car x))))
@@ -156,124 +138,9 @@
 		   (unquote-quasiquoted (cdr form) env))))))
 
 (defun evaluate-special-form (form args env)
-  (case form
-    ((if)
-     (if (<= 2 (length args) 3)
-	 (if (funcall #'evaluate (car args) env)
-	     (funcall #'evaluate (cadr args) env)
-	     (funcall #'evaluate (caddr args) env))
-	 (error "malformed if special form")))
-    ((or) ;; TODO: rename `frst`
-     (if-let (frst (funcall #'evaluate (car args) env))
-       frst
-       (when (consp (cdr args))
-	 (funcall #'evaluate
-		  `(or ,@(cdr args)) env))))
-    ((and)
-     (let ((frst (funcall #'evaluate (car args) env)))
-       (if (and frst (consp (cdr args)))
-	   (funcall #'evaluate `(and ,@(cdr args)) env)
-	   frst)))
-    ((define)
-     (if (consp (car args))
-	 (progn ; Procedure definition
-	   (push-cdr (cons (caar args)
-			   (create-procedure (cdar args)
-					     (cdr args)
-					     env))
-		     env)
-	   (caar args))
-	 (progn ; Variable definition
-	   (push-cdr (cons (car args)
-			   (funcall #'evaluate
-				    (cadr args)
-				    env))
-		     env)
-	   (car args))))
-    ((cond) ; TODO: Add `else` and `=>`
-     (loop
-       named cond-form
-       for clause in args
-       do (when (funcall #'evaluate (car clause) env)
-	    (return-from cond-form
-	      ;; TODO: Should work with multiple expressions for each test
-	      (funcall #'evaluate (cadr clause) env)))))
-    ((let)
-     (evaluate-body (cdr args)
-		    (extend-env-with-bindings (car args) env)))
-    ((let*)
-     (evaluate-body (cdr args)
-		    (extend-env-with-bindings* (car args) env)))
-    ((begin)
-     (evaluate-body args env))
-    ((lambda) ; TODO: Add argument destructuring
-     (create-procedure (car args) (cdr args) env))
-    ((quote)
-     (if (= (length args) 1)
-	 (car args)
-	 (error "wrong number of args to quote: ~a" (length args))))
-    (`(or quasiquote ,+quasiquote-symbol+)
-     (if (= (length args) 1)
-	 (unquote-quasiquoted (car args) env)
-	 (error "wrong number of args to quqsiquote: ~a" (length args))))
-    ((define-macro)
-     (progn
-       (push-cdr (cons (caar args)
-		       (create-macro (cdar args) (cdr args) env))
-		 env)
-       (caar args)))
-    ((set!) ; TODO: Correct error handling
-     (if (assoc (car args) env)
-	 (progn
-	   (update-env (car args) (funcall #'evaluate (cadr args) env) env)
-	   (car args))
-	 (error "~a undefined~%" (car args))))
-    ((set-car!) ; TODO: Maybe these don't have to be special forms
-     (if-let (val (lookup (car args) env))
-       (if (consp val)
-	   (update-env (car args)
-		       (cons (funcall #'evaluate (cadr args) env)
-			     (cdr val))
-		       env)
-	   (error "~a not a list~%" (car args)))))
-    ((set-cdr!)
-     (if-let (val (lookup (car args) env))
-       (if (consp val)
-	   (update-env (car args)
-		       (cons (car val)
-			     (funcall #'evaluate (cadr args) env))
-		       env)
-	   (error "~a not a list~%" (car args)))))
-    ((case)
-     (let ((test (funcall #'evaluate (car args))))
-       (loop
-	 named case-form
-	 for clause in (cdr args)
-	 do (when (or (eql 'else (car clause)) (member test (car clause)))
-	      (return-from case-form
-		;; TODO: This should work for multiple expressions too
-		(funcall #'evaluate (cadr clause) env))))))
-    ((do)
-     (let* ((varlist (car args))
-	    (endlist (second args))
-	    (body (cddr args))
-	    (params (mapcar #'car varlist))
-	    (args (mapcar #'second varlist)))
-       (do ((doenv (extend-env params
-			       (mapcar #'(lambda (arg)
-					   (evaluate arg env))
-				       args)
-			       env)
-		   (extend-env-with-bindings
-		    (->> varlist
-		      (remove-if-not #'third)
-		      (mapcar #'(lambda (lst)
-				  (list (car lst) (third lst)))))
-		    doenv)))
-	   ((evaluate (car endlist) doenv)
-	    (evaluate-body (cdr endlist) doenv))
-	 (evaluate-body body doenv))))
-    ))
+  (if-let (eval-op (lookup form +special-forms+))
+    (funcall eval-op args env)
+    (error "Form ~a not implemented~%" form)))
 
 (defun evaluate (expr &optional (env *global-env*))
   (if (consp expr)
