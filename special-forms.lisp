@@ -1,10 +1,64 @@
+;;; Special forms
 
-(declaim (ftype function evaluate)
-	 (ftype function evaluate-body)
-	 (ftype function extend-env))
+(load "util.lisp")
 
-(defparameter *special-forms*
-  nil)
+(defun extend-env (params args env)
+  (cons nil
+	(append (loop
+		  for sym in params
+		  for val in args
+		  collect (cons sym val))
+		(cdr env))))
+
+(defun create-procedure (params body proc-env)
+  (cons
+   'procedure
+   (lambda (args env)
+     (evaluate-body body
+		    (extend-env
+		     params
+		     (mapcar #'(lambda (form)
+				 (funcall #'evaluate form env))
+			     args)
+		     proc-env)))))
+
+(defun create-macro (params body macro-env)
+  (cons
+   'macro
+   (lambda (args env)
+     (evaluate
+      (evaluate-body body (extend-env params
+				      args
+				      macro-env))
+      env)))) ; TODO: Probably separate macro-expansion from evaluation
+
+(defun extend-env-with-bindings (bindings env)
+  (cons nil
+	(append (loop
+		  for bind in bindings
+		  collect (cons (car bind)
+				(evaluate (cadr bind) env)))
+		(cdr env))))
+
+(defun extend-env-with-bindings* (bindings env)
+  (if-let (bind (car bindings))
+    (extend-env-with-bindings*
+     (cdr bindings)
+     (append
+      (list nil
+	    (cons (car bind)
+		  (evaluate (cadr bind) env)))
+      (cdr env)))
+    env))
+
+(defun push-cdr (obj place)
+  (setf (cdr place) (cons obj (cdr place))))
+
+(defun update-env (sym value env)
+  (setf (cdr (assoc sym env)) value))
+
+(defparameter *special-forms* nil
+  "Special forms alist to map symbol with behavior function")
 
 (defmacro defspecial (name lambda-list &body body)
   "Defines a special form evaluation function and pushes it in
@@ -19,24 +73,10 @@ the global special form alist"
        (push (cons ',name #',fn-name)
 	     *special-forms*))))
 
-(defun lookup (sym env)
-  (cdr (assoc sym env)))
-
 (defconstant +quasiquote-symbol+
   (or #+SBCL 'sb-int:quasiquote
-      nil))
-
-(defun evaluate-body (body env)
-  (dolist (expr
-	   (butlast body)
-	   (evaluate (car (last body)) env))
-    (evaluate expr env)))
-
-(defmacro if-let (binding-form true-expression &optional false-expression)
-  `(let (,binding-form)
-     (if ,(car binding-form)
-	 ,true-expression
-	 ,false-expression)))
+      nil)
+  "Implementation specific quasiquote symbol")
 
 (defspecial if (args env)
   (if (<= 2 (length args) 3)
@@ -105,10 +145,34 @@ the global special form alist"
       (car args)
       (error "wrong number of args to quote: ~a" (length args))))
 
+(defun contains-comma-at-p (sexp)
+  (some #'(lambda (x)
+	    (and (consp x) (eq 'unquote-splicing (car x))))
+	sexp))
+
 (defspecial quasiquote (args env)
-  (if (= (length args) 1)
-      (unquote-quasiquoted (car args) env)
-      (error "wrong number of args to quqsiquote: ~a" (length args))))
+  (labels ((unquote-quasiquoted (form env)
+	     (if (atom form)
+		 form
+		 (cond ((eq 'unquote (car form)) ; TODO: Figure out how to add , reader macro
+			(evaluate (second form) env))
+		       ((contains-comma-at-p form)
+			(flet ((sym-position (sym sexp)
+				 (position sym
+					   sexp
+					   :test #'(lambda (item x)
+						     (and (consp x)
+							  (eq item (car x)))))))
+			  (let ((pos (sym-position 'unquote-splicing form)))
+			    (append (unquote-quasiquoted (subseq form 0 pos) env)
+				    (evaluate (cadr (nth pos form)))
+				    (unquote-quasiquoted (subseq form (1+ pos)) env)))))
+		       (:else
+			(cons (unquote-quasiquoted (car form) env)
+			      (unquote-quasiquoted (cdr form) env)))))))
+    (if (= (length args) 1)
+	(unquote-quasiquoted (car args) env)
+	(error "wrong number of args to quqsiquote: ~a" (length args)))))
 ;; Implementation specific quasiquote symbol
 (push (cons +quasiquote-symbol+ #'eval-quasiquote) *special-forms*)
 

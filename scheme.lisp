@@ -1,4 +1,5 @@
-;;; Scheme in Common Lisp
+;;; Scheme implementation in Common Lisp
+
 (ql:quickload :arrow-macros)
 (use-package :arrow-macros)
 
@@ -15,101 +16,17 @@
 							   arg))
 					  nil))
 
-(declaim (ftype function evaluate)
-	 (ftype function evaluate-body)
-	 (ftype function extend-env))
-
 ;; TODO
 ;; named let
 
 (defvar *global-env* nil
   "Interpreter's global environment.")
 
-(defun push-cdr (obj place)
-  (setf (cdr place) (cons obj (cdr place))))
-
-(defun update-env (sym value env)
-  (setf (cdr (assoc sym env)) value))
-
-(defun create-procedure (params body proc-env)
-  (cons
-   'procedure
-   (lambda (args &optional (env *global-env*))
-     (evaluate-body body
-		    (extend-env
-		     params
-		     (mapcar #'(lambda (form)
-				 (funcall #'evaluate form env))
-			     args)
-		     proc-env)))))
-
 (defun procedurep (item)
   (and (consp item) (eq 'procedure (car item))))
 
-(defun create-macro (params body macro-env)
-  (cons
-   'macro
-   (lambda (args &optional (env *global-env*))
-     (evaluate
-      (evaluate-body body (extend-env params
-				      args
-				      macro-env))
-      env)))) ; TODO: Probably separate macro-expansion from evaluation
-
 (defun macrop (item)
   (and (consp item) (eq 'macro (car item))))
-
-(defun extend-env-with-bindings (bindings env)
-  (cons nil
-	(append (loop
-		  for bind in bindings
-		  collect (cons (car bind)
-				(funcall #'evaluate (cadr bind) env)))
-		(cdr env))))
-
-(defun extend-env-with-bindings* (bindings env)
-  (if-let (bind (car bindings))
-    (extend-env-with-bindings*
-     (cdr bindings)
-     (append
-      (list nil
-	    (cons (car bind)
-		  (funcall #'evaluate (cadr bind) env)))
-      (cdr env)))
-    env))
-
-(defun extend-env (params args env)
-  (cons nil
-	(append (loop
-		  for sym in params
-		  for val in args
-		  collect (cons sym val))
-		(cdr env))))
-
-(defun contains-comma-at-p (sexp)
-  (some #'(lambda (x)
-	    (and (consp x) (eq 'unquote-splicing (car x))))
-	sexp))
-
-(defun sym-position (sym sexp)
-  (position sym
-	    sexp
-	    :test #'(lambda (item x)
-		      (and (consp x) (eq item (car x))))))
-
-(defun unquote-quasiquoted (form env)
-  (if (atom form)
-      form
-      (cond ((eq 'unquote (car form)) ; TODO: Figure out how to add , reader macro
-	     (funcall #'evaluate (cadr form) env))
-	    ((contains-comma-at-p form)
-	     (let ((pos (sym-position 'unquote-splicing form)))
-	       (append (unquote-quasiquoted (subseq form 0 pos) env)
-		       (funcall #'evaluate (cadr (nth pos form)))
-		       (unquote-quasiquoted (subseq form (1+ pos)) env))))
-	    (:else
-	     (cons (unquote-quasiquoted (car form) env)
-		   (unquote-quasiquoted (cdr form) env))))))
 
 (defun evaluate-special-form (form args env)
   (if-let (eval-op (lookup form *special-forms*))
