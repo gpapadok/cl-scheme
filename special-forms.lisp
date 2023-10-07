@@ -126,8 +126,20 @@ the global special form alist"
 	   (evaluate (cadr clause) env)))))
 
 (defspecial let (args env)
-  (evaluate-body (cdr args)
-		 (extend-env-with-bindings (car args) env)))
+  (if (consp (car args))
+      (let ((values (mapcar #'second (car args)))
+	    (proc (create-procedure (mapcar #'car (car args))
+				    (cdr args)
+				    env)))
+	(funcall (cdr proc) values env))
+      (let* ((name (car args))
+	     (values (mapcar #'second (second args)))
+	     (proc-env (copy-list env)) ; This may be inefficient
+	     (proc (create-procedure (mapcar #'car (second args))
+				    (cddr args)
+				    proc-env)))
+	(push-cdr (cons name proc) proc-env)
+	(funcall (cdr proc) values proc-env))))
 
 (defspecial let* (args env)
   (evaluate-body (cdr args)

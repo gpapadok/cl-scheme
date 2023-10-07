@@ -16,9 +16,6 @@
 							   arg))
 					  nil))
 
-;; TODO
-;; named let
-
 (defvar *global-env* nil
   "Interpreter's global environment.")
 
