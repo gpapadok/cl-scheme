@@ -198,3 +198,12 @@
 	      (vector-set! vec i i))
 	    #(0 1 2 3 4)))
   )
+
+(test eval-test
+  (is-eval (= 3 (force (delay (+ 1 2)))))
+  (is-eval (equal? (list 3 3) (let ((p (delay (+ 1 2))))
+				(list (force p) (force p)))))
+  (is-eval (let* ((counter 0)
+		  (promise (delay (+ 1 counter))))
+	     (= (force promise) (force promise) (force promise) 1)))
+  )

@@ -249,3 +249,19 @@ the global special form alist"
 	((evaluate (car endlist) doenv)
 	 (evaluate-body (cdr endlist) doenv))
       (evaluate-body body doenv))))
+
+(defspecial delay (args env)
+  (if (= (length args) 1)
+      (lambda ()
+	(let ((evaluated nil)
+	      (result nil))
+	  (if evaluated
+	      result
+	      (setf result (evaluate (car args) env)))))
+      (error "malformed delay special form~%")))
+
+(defspecial force (args env)
+  (print args)
+  (if (= (length args) 1)
+      (funcall (evaluate (car args) env))
+      (error "malformed force special form")))
