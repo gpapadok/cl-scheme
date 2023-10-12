@@ -25,33 +25,31 @@
 (defun macrop (item)
   (and (consp item) (eq 'macro (car item))))
 
-(defun evaluate-special-form (form args env)
-  (if-let (eval-op (lookup form *special-forms*))
-    (funcall eval-op args env)
-    (error "Form ~a not implemented~%" form)))
+(defun special-form-p (expr)
+  (member (car expr) (mapcar #'car *special-forms*)))
+
+(defun evaluate-special-form (expr env)
+  (if-let (eval-op (lookup (car expr) *special-forms*))
+    (funcall eval-op (cdr expr) env)
+    (error "Form ~a not implemented~%" (car expr))))
 
 (defun evaluate (expr &optional (env *global-env*))
-  (if (consp expr)
-      (let ((root (car expr)) ; TODO: Rename some variables
-	    (branches (cdr expr)))
-	(if (member root (mapcar #'car *special-forms*))
-	    (evaluate-special-form root branches env)
-	    (let ((operator (if (consp root)
-				(evaluate root env)
-				(lookup root env))))
-	      (cond
-		((functionp operator)
-		 (apply operator
-			(mapcar #'(lambda (form)
-				    (funcall #'evaluate form env))
-				branches)))
-		((or (procedurep operator) (macrop operator))
-		 (funcall (cdr operator) branches env))
-		(t (error "~a not callable" root))))))
-      (cond
+  (cond ((consp expr)
+	 (if (special-form-p expr)
+	     (evaluate-special-form expr env)
+	     (let ((operator (evaluate (car expr) env)))
+	       (cond
+		 ((functionp operator)
+		  (apply operator
+			 (mapcar #'(lambda (form)
+				     (funcall #'evaluate form env))
+				 (cdr expr))))
+		 ((or (procedurep operator) (macrop operator))
+		  (funcall (cdr operator) (cdr expr) env))
+		 (t (error "~a not callable" (car expr)))))))
 	((keywordp expr) expr)
 	((symbolp expr) (lookup expr env)) ; TODO: Error on undefined symbol
-	(t expr))))
+	(t expr)))
 
 (setq *global-env*
       (list nil ; So we can descructively push inside function
@@ -79,6 +77,8 @@
 	    (cons 'cons #'cons)
 	    (cons 'car #'car)
 	    (cons 'cdr #'cdr)
+	    (cons 'cadr #'cadr)
+	    (cons 'second #'cadr)
 	    (cons 'list #'list)
 	    (cons 'append #'append)
 	    (cons 'length #'length)
@@ -118,7 +118,7 @@
 	    (cons '#f nil)
 	    ;;
 	    (cons 'eval #'evaluate)
-	    (cons 'procedure? #'procedurep)
+	    (cons 'procedure? #'functionp)
 	    ))
 
 (defun prompt-expr ()
