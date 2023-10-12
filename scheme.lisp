@@ -48,8 +48,9 @@
 		  (funcall (cdr operator) (cdr expr) env))
 		 (t (error "~a not callable" (car expr)))))))
 	((keywordp expr) expr)
-	((symbolp expr) (lookup expr env)) ; TODO: Error on undefined symbol
-	(t expr)))
+	((symbolp expr) (lookup expr env))
+	((atom expr) expr)
+	(t (error "~a this should never trigger" expr))))
 
 (setq *global-env*
       (list nil ; So we can descructively push inside function

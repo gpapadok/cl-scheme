@@ -3,7 +3,10 @@
 (declaim (ftype function evaluate))
 
 (defun lookup (sym env)
-  (cdr (assoc sym env)))
+  (let ((variable (assoc sym env)))
+    (if (consp variable)
+	(cdr variable)
+	(error "~a undefined" sym))))
 
 (defun evaluate-body (body env)
   (dolist (expr
