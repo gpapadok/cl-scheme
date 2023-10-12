@@ -45,6 +45,8 @@
   (is-eval (= 1 (car '(1 2 3))))
   (is-eval (equal? '(4 5 6) (list 4 5 6)))
   (is-eval (= 3 (length '(1 2 3))))
+  (is-eval (procedure? car))
+  (is-eval (= 3 (apply + (list 1 2))))
   )
 
 (test let-test
@@ -148,6 +150,26 @@
   (is-eval (equal? '(1 2 3) (map (lambda (x) (+ 1 x)) '(0 1 2))))
   (is-eval (equal? '(2 4 6) (filter even? '(1 2 3 4 5 6 7))))
   (is-eval (= 21 (reduce + 0 '(1 2 3 4 5 6))))
+  (is-eval (equal? '(b e h)
+		   (map cadr '((a b) (d e) (g h)))))
+  (is-eval (equal? (list 1 4 27 256 3125)
+		   (map (lambda (x) (expt x x))
+			(list 1 2 3 4 5))))
+  ;; TODO: Implement `&rest` in lambda list
+  ;; (is-eval (equal? (list 5 7 9)
+  ;; 		   (map + '(1 2 3) '(4 5 6))))
+  (is-eval (equal? '(1 2)
+		   (let ((count 0))
+		     (map (lambda (ignored)
+			    (set! count (+ count 1))
+			    count)
+			  '(a b)))))
+  (is-eval (equal? #(0 1 4 9 16)
+		   (let ((v (make-vector 5)))
+		     (for-each (lambda (i)
+				 (vector-set! v i (* i i)))
+			       '(0 1 2 3 4))
+		     v)))
   )
 
 (test case-test
@@ -199,8 +221,11 @@
 	    #(0 1 2 3 4)))
   )
 
-(test eval-test
+(test delay-test
   (is-eval (= 3 (force (delay (+ 1 2)))))
+  (is-eval (equal? '(3 3)
+		   (let ((p (delay (+ 1 2))))
+		     (list (force p) (force p)))))
   (is-eval (equal? (list 3 3) (let ((p (delay (+ 1 2))))
 				(list (force p) (force p)))))
   (is-eval (let* ((counter 0)
