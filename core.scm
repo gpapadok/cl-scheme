@@ -14,3 +14,9 @@
   (if (null? seq)
       init-value
       (reduce op (op init-value (car seq)) (cdr seq))))
+
+(define (for-each proc seq)
+  (if (not (null? seq))
+      (begin
+	(proc (car seq))
+	(for-each proc (cdr seq)))))

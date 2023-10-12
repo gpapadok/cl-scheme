@@ -2,6 +2,8 @@
 
 (load "util.lisp")
 
+;; TODO: Implement letrec
+
 (defun extend-env (params args env)
   (cons nil
 	(append (loop
@@ -261,7 +263,6 @@ the global special form alist"
       (error "malformed delay special form~%")))
 
 (defspecial force (args env)
-  (print args)
   (if (= (length args) 1)
       (funcall (evaluate (car args) env))
       (error "malformed force special form")))
