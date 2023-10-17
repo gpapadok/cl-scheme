@@ -127,7 +127,7 @@ the global special form alist"
 	   ;; TODO: Should work with multiple expressions for each test
 	   (evaluate (cadr clause) env)))))
 
-(defspecial let (args env)
+(defspecial let (args env) ; TODO: defining same variable twice should be error
   (if (consp (car args))
       (let ((values (mapcar #'second (car args)))
 	    (proc (create-procedure (mapcar #'car (car args))
@@ -146,6 +146,16 @@ the global special form alist"
 (defspecial let* (args env)
   (evaluate-body (cdr args)
 		 (extend-env-with-bindings* (car args) env)))
+
+(defspecial letrec (args env)
+  (let ((letenv (copy-list env)))
+    (dolist (s (mapcar #'car (car args)))
+      (push-cdr (cons s nil) letenv))
+    (dolist (binding (car args))
+      (update-env (car binding)
+		  (evaluate (second binding) letenv)
+		  letenv))
+    (evaluate-body (cdr args) letenv)))
 
 (defspecial begin (args env)
   (evaluate-body args env))

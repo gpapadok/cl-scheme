@@ -5,6 +5,7 @@
 
 (load "special-forms.lisp")
 
+;; Use cl built-ins for booleans
 (set-dispatch-macro-character #\# #\t #'(lambda (stream subchar arg)
 					  (declare (ignore stream
 							   subchar
@@ -65,6 +66,7 @@
 	    (cons 'modulo #'mod)
 	    (cons 'quotient #'floor)
 	    (cons 'remainder #'rem)
+	    ;; Comparison
 	    (cons 'min #'min)
 	    (cons 'max #'max)
 	    (cons '< #'<)
@@ -102,12 +104,13 @@
 	    (cons 'symbol? #'symbolp)
 	    (cons 'char? #'characterp)
 	    (cons 'vector? #'vectorp)
+	    ;; (cons 'port? nil)
+	    ;;
 	    (cons 'make-vector #'(lambda (size &optional (v 0))
 				   (make-array size :initial-element v)))
 	    (cons 'vector-set! #'(lambda (vec pos v)
 				   (setf (aref vec pos) v)))
-	    ;; (cons 'port? nil)
-	    ;; General
+	    ;;
 	    (cons 'eq? #'eq)
 	    (cons 'equal? #'equalp)
 	    (cons 'not #'not)

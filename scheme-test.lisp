@@ -11,7 +11,12 @@
 (defmacro is-eval (sexp)
   `(is (evaluate ',sexp)))
 
-(test numeric-operations-test
+(defmacro deftest (name &body body)
+  `(test ,name
+     (let ((*global-env* (copy-list *global-env*)))
+       ,@body)))
+
+(deftest numeric-operations-test
   (is-eval (= 2 (+ 1 1)))
   (is-eval (= 15  (+ 2 (* 3 3) 4)))
   (is-eval (= 0 (- 10 6 4)))
@@ -22,12 +27,12 @@
   (is-eval (> 4 (min 1 6 7)))
   )
 
-(test list-test
+(deftest list-test
   (is-eval (equal? '(1 2 3) (quote (1 2 3))))
   (is-eval (equal? '(1 2 3) (list 1 2 3)))
   )
 
-(test procedures-test
+(deftest procedures-test
   (is-eval (= 10 ((lambda (x) (* 5 x)) 2)))
   (is-eval (begin
 	    (define (fac n)
@@ -49,7 +54,7 @@
   (is-eval (= 3 (apply + (list 1 2))))
   )
 
-(test let-test
+(deftest let-test
   (is-eval (equal? '(+ 1 2) (let ((x 1)) `(+ (unquote x) 2))))
   (is-eval (= 3 (let ((x 1) (y 2)) (+ x y))))
   (is-eval (begin
@@ -84,9 +89,38 @@
 			    (loop (cdr numbers)
 				  nonneg
 				  (cons (car numbers) neg)))))))
+  (is-eval (let ((x 1)			; This should not work
+		 (x 2))
+	     x))
+  (is-eval (let ((even?
+		   (lambda (n)
+		     (if (zero? n)
+			 #t
+			 (odd? (- n 1)))))
+		 (odd?
+		   (lambda (n)
+		     (if (zero? n)
+			 #f
+			 (even? (- n 1))))))
+	     (even? 88)))
   )
 
-(test special-form-test
+(deftest letrec-test
+  (is-eval (= 3628800
+	      (letrec
+	       ((fac (lambda (n)
+		       (if (<= n 1)
+			   n
+			   (* n (fac (- n 1)))))))
+	       (fac 10))))
+  (is-eval (letrec ((f (lambda (n)
+			 (if (= n 0)
+			     n
+			     (f (- n 1))))))
+		   (f 10)))
+  )
+
+(deftest special-form-test
   (is-eval (= 20 (begin
  		  (define x 1)
  		  (set! x 2)
@@ -102,7 +136,7 @@
   (is-eval (begin (define name "mpampis") (string=? "mpampis" name)))
   )
 
-(test closure-test
+(deftest closure-test
   (is-eval (begin
 	    (define (adder x)
 		(lambda (y) (+ x y)))
@@ -116,7 +150,7 @@
 		    (lambda (y) (* x y))) 6)))
   )
 
-(test scope-test
+(deftest scope-test
   (is-eval (begin
 	    (define x 1)
 	    (define (add2 y)
@@ -132,7 +166,7 @@
 	    (and (= 10 x) (= 3 k))))
   )
 
-(test quasiquote-test
+(deftest quasiquote-test
   (is-eval (equal? '(+ 1 2) `(+ 1 (unquote (- 3 1)))))
   (is-eval (equal? '(1 2 3 4 5) `(1
 				  (unquote-splicing
@@ -140,13 +174,13 @@
 				  5)))
   )
 
-(test macro-test
+(deftest macro-test
   (is-eval (begin
 	    (define-macro (inc x) `(+ 1 (unquote x)))
 	    (= 2 (inc 1))))
   )
 
-(test higher-order-functions-test
+(deftest higher-order-functions-test
   (is-eval (equal? '(1 2 3) (map (lambda (x) (+ 1 x)) '(0 1 2))))
   (is-eval (equal? '(2 4 6) (filter even? '(1 2 3 4 5 6 7))))
   (is-eval (= 21 (reduce + 0 '(1 2 3 4 5 6))))
@@ -172,7 +206,7 @@
 		     v)))
   )
 
-(test case-test
+(deftest case-test
   (is-eval (equal? 'composite
 		   (case (* 2 3)
 		     ((2 3 5 7) 'prime)
@@ -187,7 +221,7 @@
 		     (else 'consonant))))
   )
 
-(test vector-test
+(deftest vector-test
   (is-eval (let ((v (make-vector 4)))
 	     (and (vector? v)
 		  (equal? #(0 0 0 0) v))))
@@ -198,7 +232,7 @@
 		   (equal? #(2 3 2) v)))))
   )
 
-(test set-test
+(deftest set-test
   (is-eval (let ((seq '(1 2 3)))
 	     (and (set-car! seq 0)
 		  (equal? seq '(0 2 3))
@@ -206,7 +240,7 @@
 		  (equal? seq '(0 4 5)))))
       )
 
-(test do-test
+(deftest do-test
   (is-eval (let ((x 1))
 	     (= (do ((i 1 (+ i 1)))
 		    ((> i 10) x)
@@ -221,7 +255,7 @@
 	    #(0 1 2 3 4)))
   )
 
-(test delay-test
+(deftest delay-test
   (is-eval (= 3 (force (delay (+ 1 2)))))
   (is-eval (equal? '(3 3)
 		   (let ((p (delay (+ 1 2))))
