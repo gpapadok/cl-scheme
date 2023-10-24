@@ -20,3 +20,23 @@
       (begin
 	(proc (car seq))
 	(for-each proc (cdr seq)))))
+
+;;;
+
+(define (memq obj lst)
+  (and (pair? lst)
+       (if (eq? obj (car lst))
+	   lst
+	   (memq obj (cdr lst)))))
+
+(define (memv obj lst)
+  (and (pair? lst)
+       (if (eqv? obj (car lst))
+	   lst
+	   (memv obj (cdr lst)))))
+
+(define (member obj lst)
+  (and (pair? lst)
+       (if (equal? obj (car lst))
+	   lst
+	   (member obj (cdr lst)))))

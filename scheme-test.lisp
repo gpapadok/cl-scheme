@@ -8,7 +8,7 @@
 
 (setf *run-test-when-defined* t)
 
-(defmacro is-eval (sexp)
+(defmacro is-eval (sexp)		; TODO: Rename
   `(is (evaluate ',sexp)))
 
 (defmacro deftest (name &body body)
@@ -27,9 +27,79 @@
   (is-eval (> 4 (min 1 6 7)))
   )
 
+(deftest equality-test
+  ;; eq?
+  (is-eval (eq? 'a 'a))
+  (is-eval (not (eq? (list 'a) (list 'a))))
+  (is-eval (eq? '() '()))
+  (is-eval (eq? car car))
+  (is-eval (let ((n (+ 2 3)))
+	     (eq? n n)))
+  (is-eval (let ((x '(a)))
+	     (eq? x x)))
+  (is-eval (let ((x '#()))
+	     (eq? x x)))
+  (is-eval (let ((x (lambda (x) x)))
+	     (eq? x x)))
+  ;; eqv?
+  (is-eval (and (eqv? #t #t) (eqv? #f #f) (not (eqv? #t #f))))
+  (is-eval (and (eqv? 'a 'a) (not (eqv? 'a 'b))))
+  (is-eval (eqv? 'foo 'foo))
+  ;; (is-eval (and (eqv? 1 1) (not (eqv? 1 1.0))))
+  (is-eval (eqv? #\a #\a))
+  (is-eval (eqv? '() '()))
+  (is-eval (and (eqv? 2 2) (not (eqv? 2 2.0))))
+  (is-eval (not (eqv? (cons 1 2) (cons 1 2))))
+  (is-eval (not (eqv? (lambda () 1)
+		      (lambda () 2))))
+  (is-eval (eqv? #f 'nil))
+  (is-eval (let ((p (lambda (x) x)))
+	     (eqv? p p)))
+  (is-eval (let* ((l (list 1 2 3))
+		  (k l))
+	     (and (eqv? l l)
+		  (eqv? l k)
+		  (not (eqv? l (list 1 2 3))))))
+  (is-eval (begin
+	    (define gen-counter
+		(lambda ()
+		  (let ((n 0 ))
+		    (lambda () (set! n (+ n 1)) n))))
+	    (let ((g (gen-counter)))
+	      (and (eqv? g g)
+		   (not (eqv? (gen-counter)
+			      (gen-counter)))))))
+  ;; equal?
+  (is-eval (equal? 'a 'a))
+  (is-eval (equal? '(a) '(a)))
+  (is-eval (equal? '(a (b) c)
+		   '(a (b) c)))
+  (is-eval (equal? "abc" "abc"))
+  (is-eval (equal? 2 2))
+  (is-eval (equal? (make-vector 5 'a)
+		   (make-vector 5 'a)))
+  (is-eval (not (equal? (lambda (x) x)
+			(lambda (y) y))))
+  )
+
 (deftest list-test
   (is-eval (equal? '(1 2 3) (quote (1 2 3))))
   (is-eval (equal? '(1 2 3) (list 1 2 3)))
+  (is-eval (pair? '(a . b)))
+  (is-eval (pair? '(a b c)))
+  (is-eval (not (pair? '())))
+  (is-eval (not (pair? '#(a b))))
+  (is-eval (equal? '(3 4) (list-tail '(1 2 3 4) 2)))
+  (is-eval (equal? 'c (list-ref '(a b c d) 2)))
+  ;; memq
+  (is-eval (equal? '(a b c) (memq 'a '(a b c))))
+  (is-eval (equal? '(b c) (memq 'b '(a b c))))
+  (is-eval (not (memq 'a '(b c d))))
+  (is-eval (equal? '(101 102) (memq 101 '(100 101 102))))
+  ;; memv
+  (is-eval (equal? '(101 102) (memv 101 '(100 101 102))))
+  ;; member
+  (is-eval (equal? '((a) c) (member (list 'a) '(b (a) c))))
   )
 
 (deftest procedures-test

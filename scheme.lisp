@@ -64,8 +64,14 @@
 	    (cons 'abs #'abs)
 	    (cons 'expt #'expt)
 	    (cons 'modulo #'mod)
-	    (cons 'quotient #'floor)
+	    ;; (cons 'quotient #'floor) ; TODO: Implement correctly
 	    (cons 'remainder #'rem)
+	    (cons 'floor #'floor)
+	    (cons 'ceiling #'ceiling)
+	    (cons 'truncate #'truncate)
+	    (cons 'round #'round)
+	    (cons 'exact? #'rationalp)
+	    (cons 'inexact? #'floatp)
 	    ;; Comparison
 	    (cons 'min #'min)
 	    (cons 'max #'max)
@@ -86,6 +92,12 @@
 	    (cons 'append #'append)
 	    (cons 'length #'length)
 	    (cons 'apply #'apply)
+	    (cons 'reverse #'reverse)
+	    (cons 'list-tail #'(lambda (lst n) (nthcdr n lst)))
+	    (cons 'list-ref #'(lambda (lst n) (nth n lst)))
+	    ;; (cons 'memq #'(lambda (obj lst) (member obj lst :test #'eq)))
+	    ;; (cons 'memv #'(lambda (obj lst) (member obj lst :test #'eq))) ; TODO: Implement correctly
+	    ;; (cons 'member #'(lambda (obj lst) (member obj lst :test #'equalp)))
 	    ;; Printing
 	    (cons 'print #'print)
 	    (cons 'display #'princ) ; TODO: It also prints output
@@ -99,7 +111,7 @@
 	    (cons 'list? #'listp)
 	    (cons 'number? #'numberp)
 	    (cons 'null? #'null)
-	    (cons 'pair? #'(lambda (x) (and (car x) (cdr x) t)))
+	    (cons 'pair? #'consp)
 	    (cons 'string? #'stringp)
 	    (cons 'symbol? #'symbolp)
 	    (cons 'char? #'characterp)
@@ -112,6 +124,7 @@
 				   (setf (aref vec pos) v)))
 	    ;;
 	    (cons 'eq? #'eq)
+	    (cons 'eqv? #'eql)
 	    (cons 'equal? #'equalp)
 	    (cons 'not #'not)
 	    (cons 'string=? #'string=)
