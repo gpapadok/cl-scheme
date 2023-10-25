@@ -102,6 +102,18 @@
   (is-eval (equal? '((a) c) (member (list 'a) '(b (a) c))))
   )
 
+(deftest alist-test
+  (is-eval (begin
+	    (define e '((a 1) (b 2) (c 3)))
+	    (and (equal? '(a 1) (assq 'a e))
+		 (equal? '(b 2) (assq 'b e))
+		 (not (assq 'd e)))))
+  (is-eval (not (assq (list 'a) '(((a) ((b)) ((c)))))))
+  (is-eval (equal? '(5 7) (assq 5 '((2 3) (5 7) (11 13)))))
+  (is-eval (equal? '(5 7) (assv 5 '((2 3) (5 7) (11 13)))))
+  (is-eval (equal? '((a)) (assoc (list 'a) '(((a)) ((b)) ((c))))))
+  )
+
 (deftest procedures-test
   (is-eval (= 10 ((lambda (x) (* 5 x)) 2)))
   (is-eval (begin

@@ -23,20 +23,33 @@
 
 ;;;
 
-(define (memq obj lst)
+(define (%member obj lst compare)
   (and (pair? lst)
-       (if (eq? obj (car lst))
+       (if (compare obj (car lst))
 	   lst
-	   (memq obj (cdr lst)))))
+	   (%member obj (cdr lst) compare))))
+
+(define (memq obj lst)
+  (%member obj lst eq?))
 
 (define (memv obj lst)
-  (and (pair? lst)
-       (if (eqv? obj (car lst))
-	   lst
-	   (memv obj (cdr lst)))))
+  (%member obj lst eqv?))
 
 (define (member obj lst)
-  (and (pair? lst)
-       (if (equal? obj (car lst))
-	   lst
-	   (member obj (cdr lst)))))
+  (%member obj lst equal?))
+
+(define (%assoc key lst compare)
+  (let ((pair (car lst)))
+    (and (pair? pair)
+	 (if (compare key (car pair))
+	     pair
+	     (%assoc key (cdr lst) compare)))))
+
+(define (assq key lst)
+  (%assoc key lst eq?))
+
+(define (assv key lst)
+  (%assoc key lst eqv?))
+
+(define (assoc key lst)
+  (%assoc key lst equal?))
