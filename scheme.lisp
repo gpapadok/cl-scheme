@@ -56,6 +56,8 @@
 (setq *global-env*
       (list nil ; So we can descructively push inside function
 	    ;; Numeric operations
+	    ;; TODO: Implement `numerator`/`denominator`
+	    ;; TODO: Implement `gcd`/`lcm`
 	    (cons '+ #'+)
 	    (cons '- #'-)
 	    (cons '* #'*)
@@ -79,9 +81,6 @@
 	    (cons '> #'>)
 	    (cons '>= #'>=)
 	    (cons '<= #'<=)
-	    (cons 'even? #'evenp)
-	    (cons 'odd? #'oddp)
-	    (cons 'zero? #'zerop)
 	    ;; List operations
 	    (cons 'cons #'cons)
 	    (cons 'car #'car)

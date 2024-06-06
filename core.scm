@@ -53,3 +53,12 @@
 
 (define (assoc key lst)
   (%assoc key lst equal?))
+
+(define (even? n)
+  (= (remainder n 2) 0))
+
+(define (odd? n)
+  (= (remainder n 2) 1))
+
+(define (zero? n)
+  (= n 0))
