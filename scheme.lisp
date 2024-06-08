@@ -27,31 +27,33 @@
   (and (consp item) (eq 'macro (car item))))
 
 (defun special-form-p (expr)
-  (member (car expr) (mapcar #'car *special-forms*)))
+  (and (consp expr)
+       (member (car expr) (mapcar #'car *special-forms*))))
 
 (defun evaluate-special-form (expr env)
   (if-let (eval-op (lookup (car expr) *special-forms*))
     (funcall eval-op (cdr expr) env)
     (error "Form ~a not implemented~%" (car expr))))
 
+(defun self-evaluating-p (expr)
+  (or (numberp expr) (stringp expr) (keywordp expr) (vectorp expr)))
+
 (defun evaluate (expr &optional (env *global-env*))
-  (cond ((consp expr)
-	 (if (special-form-p expr)
-	     (evaluate-special-form expr env)
-	     (let ((operator (evaluate (car expr) env)))
-	       (cond
-		 ((functionp operator)
-		  (apply operator
-			 (mapcar #'(lambda (form)
-				     (funcall #'evaluate form env))
-				 (cdr expr))))
-		 ((or (procedurep operator) (macrop operator))
-		  (funcall (cdr operator) (cdr expr) env))
-		 (t (error "~a not callable" (car expr)))))))
-	((keywordp expr) expr)
+  (cond ((self-evaluating-p expr) expr)
 	((symbolp expr) (lookup expr env))
-	((atom expr) expr)
-	(t (error "~a this should never trigger" expr))))
+	((special-form-p expr) (evaluate-special-form expr env))
+	((consp expr)
+	 (let ((operator (evaluate (car expr) env)))
+	   (cond
+	     ((functionp operator)
+	      (apply operator
+		     (mapcar #'(lambda (form)
+				 (funcall #'evaluate form env))
+			     (cdr expr))))
+	     ((or (procedurep operator) (macrop operator))
+	      (funcall (cdr operator) (cdr expr) env))
+	     (t (error "~a not callable" (car expr))))))
+	(t (error "Unknown expression ~a" expr))))
 
 (setq *global-env*
       (list nil ; So we can descructively push inside function
