@@ -18,7 +18,7 @@
 
 (deftest numeric-operations-test
   (is-eval (= 2 (+ 1 1)))
-  (is-eval (= 15  (+ 2 (* 3 3) 4)))
+  (is-eval (= 15 (+ 2 (* 3 3) 4)))
   (is-eval (= 0 (- 10 6 4)))
   (is-eval (= 5 (/ 15 3)))
   (is-eval (= 1 (abs -1)))
