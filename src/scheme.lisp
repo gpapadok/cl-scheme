@@ -1,21 +1,17 @@
-;;; Scheme implementation in Common Lisp
-
-(ql:quickload :arrow-macros)
-(use-package :arrow-macros)
-
-(load "special-forms.lisp")
+(in-package #:cl-scheme)
 
 ;; Use cl built-ins for booleans
-(set-dispatch-macro-character #\# #\t #'(lambda (stream subchar arg)
-					  (declare (ignore stream
-							   subchar
-							   arg))
-					  t))
-(set-dispatch-macro-character #\# #\f #'(lambda (stream subchar arg)
-					  (declare (ignore stream
-							   subchar
-							   arg))
-					  nil))
+(eval-when (:compile-toplevel)
+  (set-dispatch-macro-character #\# #\t #'(lambda (stream subchar arg)
+					    (declare (ignore stream
+							     subchar
+							     arg))
+					    t))
+  (set-dispatch-macro-character #\# #\f #'(lambda (stream subchar arg)
+					    (declare (ignore stream
+							     subchar
+							     arg))
+					    nil)))
 
 (defvar *global-env* nil
   "Interpreter's global environment.")
@@ -169,4 +165,4 @@
       (error (err) (format t "~a~%" err))))
   (format t "Bye!"))
 
-(load-script "core.scm" :quiet t)
+(load-script "src/scm/core.scm" :quiet t)

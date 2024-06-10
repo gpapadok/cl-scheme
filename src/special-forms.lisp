@@ -1,6 +1,4 @@
-;;; Special forms
-
-(load "util.lisp")
+(in-package #:cl-scheme)
 
 ;; TODO: Implement letrec
 
@@ -52,6 +50,14 @@
 		  (evaluate (cadr bind) env)))
       (cdr env)))
     env))
+
+;; (defun extend-env-with-bindings! (bindings env)
+;;   (cons nil
+;; 	(append (loop
+;; 		  for bind in bindings
+;; 		  collect (cons (car bind)
+;; 				(evaluate (cadr bind) env)))
+;; 		(cdr env))))
 
 (defun push-cdr (obj place)
   (setf (cdr place) (cons obj (cdr place))))
