@@ -8,9 +8,7 @@
   :components ((:file "package")
                (:file "util")
                (:file "special-forms")
-               (:file "scheme")
-               ;; (:file "run")
-               )
+               (:file "scheme"))
   :in-order-to ((test-op (test-op :cl-scheme/test))))
 
 (asdf:defsystem :cl-scheme/test
