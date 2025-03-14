@@ -177,14 +177,17 @@ the global special form alist"
 
 (defun contains-comma-at-p (sexp)
   (some #'(lambda (x)
-            (and (consp x) (eq 'unquote-splicing (car x))))
+            (and (consp x)
+                 (symbolp (car x))
+                 (string= 'unquote-splicing (car x))))
         sexp))
 
 (defspecial quasiquote (args env)
   (labels ((unquote-quasiquoted (form env)
              (if (atom form)
                  form
-                 (cond ((eq 'unquote (car form)) ; TODO: Figure out how to add , reader macro
+                 (cond ((and (symbolp (car form))
+                             (string= 'unquote (car form))) ; TODO: Figure out how to add , reader macro
                         (evaluate (second form) env))
                        ((contains-comma-at-p form)
                         (flet ((sym-position (sym sexp)
@@ -192,7 +195,8 @@ the global special form alist"
                                            sexp
                                            :test #'(lambda (item x)
                                                      (and (consp x)
-                                                          (eq item (car x)))))))
+                                                          (symbolp (car x))
+                                                          (string= item (car x)))))))
                           (let ((pos (sym-position 'unquote-splicing form)))
                             (append (unquote-quasiquoted (subseq form 0 pos) env)
                                     (evaluate (cadr (nth pos form)))
@@ -242,7 +246,9 @@ the global special form alist"
     (loop
       named case-form
       for clause in (cdr args)
-      do (when (or (eql 'else (car clause)) (member test (car clause)))
+      do (when (or (and (symbolp (car clause))
+                        (string= 'else (car clause)))
+                   (member test (car clause)))
            (return-from case-form
              ;; TODO: This should work for multiple expressions too
              (evaluate (cadr clause) env))))))
@@ -270,12 +276,13 @@ the global special form alist"
 
 (defspecial delay (args env)
   (if (= (length args) 1)
-      (lambda ()
-        (let ((evaluated nil)
-              (result nil))
+      (let ((evaluated nil)
+            (result nil))
+        (lambda ()
           (if evaluated
               result
-              (setf result (evaluate (car args) env)))))
+              (setf evaluated t
+                    result (evaluate (car args) env)))))
       (error "malformed delay special form~%")))
 
 (defspecial force (args env)

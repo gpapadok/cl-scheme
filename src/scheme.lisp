@@ -24,7 +24,8 @@
 
 (defun special-form-p (expr)
   (and (consp expr)
-       (member (car expr) (mapcar #'car *special-forms*))))
+       (symbolp (car expr))
+       (member (car expr) (mapcar #'car *special-forms*) :test #'string=)))
 
 (defun evaluate-special-form (expr env)
   (if-let (eval-op (lookup (car expr) *special-forms*))
@@ -36,20 +37,21 @@
 
 (defun evaluate (expr &optional (env *global-env*))
   (cond ((self-evaluating-p expr) expr)
-	((symbolp expr) (lookup expr env))
-	((special-form-p expr) (evaluate-special-form expr env))
-	((consp expr)
-	 (let ((operator (evaluate (car expr) env)))
-	   (cond
-	     ((functionp operator)
-	      (apply operator
-		     (mapcar #'(lambda (form)
-				 (funcall #'evaluate form env))
-			     (cdr expr))))
-	     ((or (procedurep operator) (macrop operator))
-	      (funcall (cdr operator) (cdr expr) env))
-	     (t (error "~a not callable" (car expr))))))
-	(t (error "Unknown expression ~a" expr))))
+	    ((special-form-p expr) (evaluate-special-form expr env))
+	    ((symbolp expr) (lookup expr env))
+        ((consp expr)
+	     (let ((operator (evaluate (car expr) env)))
+	       (cond
+	         ((functionp operator)
+	          (apply operator
+		             (mapcar #'(lambda (form)
+				                 (funcall #'evaluate form env))
+			                 (cdr expr))))
+	         ((or (procedurep operator) (macrop operator))
+	          (funcall (cdr operator) (cdr expr) env))
+	         (t (error "~a not callable" (car expr))))))
+        ((atom expr) expr)
+	    (t (error "Unknown expression ~a" expr))))
 
 (setq *global-env*
       (list nil ; So we can descructively push inside function

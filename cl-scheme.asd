@@ -15,7 +15,7 @@
 
 (asdf:defsystem :cl-scheme/test
   :author "Giorgos Papadokostakis"
-  :depends-on (:cl-scheme :fiveam)
+  :depends-on (:cl-scheme :rove)
   :pathname "t/"
-  :components ()
-  :perform (test-op (o c) (symbol-call :fiveam :run c)))
+  :components ((:file "scheme-test"))
+  :perform (test-op (o c) (symbol-call :rove :run c)))
