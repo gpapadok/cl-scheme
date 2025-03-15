@@ -1,12 +1,18 @@
 * Scheme in Common Lisp
 
-A Scheme written in Common Lisp to take advantage of the built-in tools Lisp offers to read and evaluate structured expressions.
-This implementation is a subset of [[https://conservatory.scheme.org/schemers/Documents/Standards/R5RS/r5rs.pdf][r5rs.pdf]].
-Tested and developed only with Steel Bank Common Lisp.
+A Scheme written in Common Lisp to take advantage of the built-in
+tools Lisp offers to read and evaluate structured expressions.  This
+implementation is a subset of [[https://conservatory.scheme.org/schemers/Documents/Standards/R5RS/r5rs.pdf][r5rs.pdf]].  Tested and developed only
+with Steel Bank Common Lisp.
 
-Run with:
+Build with:
 #+begin_src bash
-sbcl --script run.lisp
+make build
+#+end_src
+
+And run:
+#+begin_src bash
+./scheme
 #+end_src
 
 ** Examples
