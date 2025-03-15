@@ -1,3 +1,5 @@
 (uiop:define-package #:cl-scheme
-  (:use #:cl #:arrow-macros)
+  (:use #:cl)
+  (:import-from #:arrow-macros
+                #:->>)
   (:export #:repl))
