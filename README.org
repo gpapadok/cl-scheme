@@ -1,5 +1,50 @@
 * Scheme in Common Lisp
 
+#+begin_src
+                                          λλλλλλλλλλλλλλλ
+                                  λλλλλλλλλλλλλλλλλλλλλλλλλλλλλλλ
+                              λλλλλλ                            λλλλλλλ
+                          λλλλλ                                      λλλλλλλ
+                        λλλλ                                             λλλλλλ
+                     λλλλλ                                                  λλλλ
+                   λλλλ                                                       λλλλλ
+                 λλλλ                                                            λλλλ
+               λλλλ                                                                λλλλ
+              λλλλ                                                                  λλλλλ
+             λλλ                                                  λλλλλλλλλλλ         λλλλ
+            λλλ                                             λλλλλλλλλλλλλλλλλλλλλλλ    λλλλ
+          λλλ                                           λλλλλλλ                   λλλλλλλλλ
+          λλ                                           λλλλ                          λλλλλλλ
+         λλλ                                          λλλ                              λλλλλ
+        λλλ                                         λλλλ                                λλλλλ
+        λλλ                                        λλλ                                   λλλλλ
+       λλλ                                         λλλ                                    λλλλ
+       λλλ                                        λλλ                                      λλλ
+       λλ                                         λλ                                        λλ
+       λλ                  Eval                  λλλ                Apply                   λλ
+       λλ                                        λλ                                         λλ
+       λλ                                        λλ                                         λλ
+       λλλ                                      λλλ                                         λλ
+       λλλλ                                    λλλ                                         λλλ
+        λλλλ                                 λλλλ                                         λλλ
+        λλλλλ                               λλλλ                                          λλλ
+         λλλλλλ                            λλλλ                                          λλλ
+          λλλ λλλ                        λλλλ                                           λλλλ
+           λλλ   λλλ                 λλλλλλ                                            λλλ
+            λλλ     λλλλλλλλλλλλλλλλλλλ                                               λλλ
+             λλλ           λλλλλ                                                     λλλ
+              λλλ                                                                  λλλλ
+               λλλλ                                                              λλλλλ
+                λλλλλλ                                                         λλλλλ
+                   λλλλλ                                                     λλλλλ
+                      λλλλλ                                                λλλλλ
+                         λλλλλ                                          λλλλλ
+                            λλλλλλ                                 λλλλλλλ
+                                λλλλλλλ                       λλλλλλλ
+                                      λλλλλλλλλλλλλλλλλλλλλλλλλλ
+                                                λλλλλλ
+#+end_src
+
 A Scheme written in Common Lisp to take advantage of the built-in
 tools Lisp offers to read and evaluate structured expressions.  This
 implementation is a subset of [[https://conservatory.scheme.org/schemers/Documents/Standards/R5RS/r5rs.pdf][r5rs.pdf]].  Tested and developed only
