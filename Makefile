@@ -7,5 +7,9 @@ build:
 run: build
 	./scheme
 
+test:
+	sbcl --noinform --eval "(asdf:initialize-source-registry '(:source-registry (:directory \"$(PWD)\") :inherit-configuration))" \
+                    --eval "(asdf:test-system :cl-scheme)" --quit
+
 clean:
 	rm scheme
