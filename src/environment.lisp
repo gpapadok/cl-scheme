@@ -100,7 +100,7 @@
 	   (cons 'procedure? #'functionp)))
 
 (defun env-push! (name value &optional (env *global-env*))
-  (push-cdr (cons name value) env))
+  (push-cdr! (cons name value) env))
 
 (defun env-lookup (env sym)
   (let ((variable (assoc sym env :test #'string=)))

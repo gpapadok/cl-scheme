@@ -14,5 +14,5 @@
          ,true-expression
          ,false-expression)))
 
-(defun push-cdr (obj place)
+(defun push-cdr! (obj place)
   (setf (cdr place) (cons obj (cdr place))))

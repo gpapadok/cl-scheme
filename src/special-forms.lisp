@@ -24,9 +24,6 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defun push-cdr (obj place)
-  (setf (cdr place) (cons obj (cdr place))))
-
 (defparameter *special-forms* nil
   "Special forms alist to map symbol with behavior function")
 
@@ -72,18 +69,18 @@ the global special form alist"
 (defspecial define (args env)
   (if (consp (car args))
       (progn                ; Procedure definition
-        (push-cdr (cons (caar args)
-                        (create-procedure (cdar args)
-                                          (cdr args)
-                                          env))
-                  env)
+        (env-push! (caar args)
+                   (create-procedure (cdar args)
+                                     (cdr args)
+                                     env)
+                   env)
         (caar args))
       (progn                ; Variable definition
-        (push-cdr (cons (car args)
-                        (evaluate
-                         (cadr args)
-                         env))
-                  env)
+        (env-push! (car args)
+                   (evaluate
+                    (cadr args)
+                    env)
+                   env)
         (car args))))
 
 (defspecial cond (args env)
@@ -108,7 +105,7 @@ the global special form alist"
              (proc (create-procedure (mapcar #'car (second args))
                                      (cddr args)
                                      proc-env)))
-        (push-cdr (cons name proc) proc-env)
+        (env-push! name proc proc-env)
         (funcall (cdr proc) values proc-env))))
 
 (defspecial let* (args env)
@@ -118,7 +115,7 @@ the global special form alist"
 (defspecial letrec (args env)
   (let ((letenv (copy-list env)))
     (dolist (s (mapcar #'car (car args)))
-      (push-cdr (cons s nil) letenv))
+      (env-push! s nil letenv))
     (dolist (binding (car args))
       (env-update! letenv
                   (car binding)
@@ -173,9 +170,7 @@ the global special form alist"
 (push (cons +quasiquote-symbol+ #'eval-quasiquote) *special-forms*)
 
 (defspecial define-macro (args env)
-  (push-cdr (cons (caar args)
-                  (create-macro (cdar args) (cdr args) env))
-            env)
+  (env-push! (caar args) (create-macro (cdar args) (cdr args) env) env)
   (caar args))
 
 (defspecial set! (args env)
