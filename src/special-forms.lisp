@@ -224,7 +224,7 @@ the global special form alist"
       (error "~a undefined~%" (car args))))
 
 (defspecial set-car! (args env)
-  (if-let (val (lookup (car args) env))
+  (if-let (val (env-lookup env (car args)))
     (if (consp val)
         (update-env (car args)
                     (cons (evaluate (cadr args) env)
@@ -233,7 +233,7 @@ the global special form alist"
         (error "~a not a list~%" (car args)))))
 
 (defspecial set-cdr! (args env)
-  (if-let (val (lookup (car args) env))
+  (if-let (val (env-lookup env (car args)))
     (if (consp val)
         (update-env (car args)
                     (cons (car val)

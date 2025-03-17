@@ -8,6 +8,7 @@
   :components ((:file "package")
                (:file "util")
                (:file "special-forms")
+               (:file "environment")
                (:file "scheme"))
   :in-order-to ((test-op (test-op :cl-scheme/test))))
 

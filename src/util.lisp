@@ -2,12 +2,6 @@
 
 (declaim (ftype function evaluate))
 
-(defun lookup (sym env)
-  (let ((variable (assoc sym env :test #'string=)))
-    (if (consp variable)
-	(cdr variable)
-	(error "~a undefined" sym))))
-
 (defun evaluate-body (body env)
   (dolist (expr
 	   (butlast body)
