@@ -16,6 +16,3 @@
 
 (defun push-cdr (obj place)
   (setf (cdr place) (cons obj (cdr place))))
-
-(defun update-env (sym value env)
-  (setf (cdr (assoc sym env)) value))

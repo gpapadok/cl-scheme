@@ -107,3 +107,6 @@
     (if (consp variable)
 	    (cdr variable)
 	    (error "~a undefined" sym))))
+
+(defun env-update (env sym value)
+  (setf (cdr (assoc sym env)) value))

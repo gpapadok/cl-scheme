@@ -62,9 +62,6 @@
 (defun push-cdr (obj place)
   (setf (cdr place) (cons obj (cdr place))))
 
-(defun update-env (sym value env)
-  (setf (cdr (assoc sym env)) value))
-
 (defparameter *special-forms* nil
   "Special forms alist to map symbol with behavior function")
 
@@ -158,9 +155,9 @@ the global special form alist"
     (dolist (s (mapcar #'car (car args)))
       (push-cdr (cons s nil) letenv))
     (dolist (binding (car args))
-      (update-env (car binding)
-                  (evaluate (second binding) letenv)
-                  letenv))
+      (env-update letenv
+                  (car binding)
+                  (evaluate (second binding) letenv)))
     (evaluate-body (cdr args) letenv)))
 
 (defspecial begin (args env)
@@ -219,26 +216,26 @@ the global special form alist"
 (defspecial set! (args env)
   (if (assoc (car args) env)
       (progn
-        (update-env (car args) (evaluate (cadr args) env) env)
+        (env-update env (car args) (evaluate (cadr args) env))
         (car args))
       (error "~a undefined~%" (car args))))
 
 (defspecial set-car! (args env)
   (if-let (val (env-lookup env (car args)))
     (if (consp val)
-        (update-env (car args)
+        (env-update env
+                    (car args)
                     (cons (evaluate (cadr args) env)
-                          (cdr val))
-                    env)
+                          (cdr val)))
         (error "~a not a list~%" (car args)))))
 
 (defspecial set-cdr! (args env)
   (if-let (val (env-lookup env (car args)))
     (if (consp val)
-        (update-env (car args)
+        (env-update env
+                    (car args)
                     (cons (car val)
-                          (evaluate (cadr args) env))
-                    env)
+                          (evaluate (cadr args) env)))
         (error "~a not a list~%" (car args)))))
 
 (defspecial case (args env)
