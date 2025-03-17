@@ -159,7 +159,7 @@ the global special form alist"
                                                           (string= item (car x)))))))
                           (let ((pos (sym-position 'unquote-splicing form)))
                             (append (unquote-quasiquoted (subseq form 0 pos) env)
-                                    (evaluate (cadr (nth pos form)))
+                                    (evaluate (cadr (nth pos form)) env)
                                     (unquote-quasiquoted (subseq form (1+ pos)) env)))))
                        (:else
                         (cons (unquote-quasiquoted (car form) env)
@@ -200,7 +200,7 @@ the global special form alist"
         (error "~a not a list~%" (car args)))))
 
 (defspecial case (args env)
-  (let ((test (evaluate (car args))))
+  (let ((test (evaluate (car args) env)))
     (loop
       named case-form
       for clause in (cdr args)

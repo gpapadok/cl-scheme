@@ -25,7 +25,7 @@
 
 (defun lookup-variable (expr env) (env-lookup env expr))
 
-(defun evaluate (expr &optional (env *global-env*))
+(defun evaluate (expr env)
   (cond ((self-evaluating-p expr) expr)
         ((variablep expr) (lookup-variable expr env))
         ((special-form-p expr) (evaluate-special-form expr env))

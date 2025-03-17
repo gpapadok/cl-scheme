@@ -6,7 +6,7 @@
 (in-package #:cl-scheme/test)
 
 (defmacro ok-eval (sexp)
-  `(ok (evaluate ',sexp)))
+  `(ok (evaluate ',sexp *global-env*)))
 
 (deftest numeric-operations-test
   (testing "simple numeric operations"
