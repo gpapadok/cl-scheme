@@ -26,7 +26,8 @@
 (defun lookup-variable (expr env) (env-lookup env expr))
 
 (defun evaluate (expr env)
-  (cond ((self-evaluating-p expr) expr)
+  (cond ((eq expr :env) (print env))
+        ((self-evaluating-p expr) expr)
         ((variablep expr) (lookup-variable expr env))
         ((special-form-p expr) (evaluate-special-form expr env))
         ((applicationp expr)
@@ -43,14 +44,12 @@
         ((atom expr) expr)
         (t (error "Unknown expression ~a" expr))))
 
-(env-push! *global-env* 'evaluate #'evaluate)
-
 (defun prompt-expr ()
   (format *query-io* "λ> ")
   (force-output *query-io*)
   (read t t))
 
-(defun load-script (filename &key quiet)
+(defun load-script (filename env &key quiet)
   (with-open-file (script filename)
     (let ((result nil))
       (loop
@@ -61,18 +60,19 @@
                   (format t "~a~%" result))
                 (return))
               (handler-case
-                  (setq result (evaluate sexp *global-env*))
+                  (setq result (evaluate sexp env))
                 (error (err) (format t "~a~%" err)))))))))
 
 (defun repl ()
-  (loop
-    (handler-case
-        (let ((result (evaluate (prompt-expr) *global-env*)))
-          (if (equal result :quit)
-              (return)
-              (format t "~a~%" result)))
-      (end-of-file () (return))
-      (error (err) (format t "~a~%" err))))
-  (format t "Bye!"))
-
-(load-script "src/scm/core.scm" :quiet t)
+  (let ((env (create-global-env)))
+    (env-push! env 'evaluate #'evaluate)
+    (load-script "src/scm/core.scm" env :quiet t)
+    (loop
+      (handler-case
+          (let ((result (evaluate (prompt-expr) env)))
+            (if (equal result :quit)
+                (return)
+                (format t "~a~%" result)))
+        (end-of-file () (return))
+        (error (err) (format t "~a~%" err))))
+    (format t "Bye!")))

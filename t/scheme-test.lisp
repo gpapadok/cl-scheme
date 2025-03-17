@@ -5,8 +5,13 @@
                 #:evaluate))
 (in-package #:cl-scheme/test)
 
+(defvar *global-test-env* (cl-scheme::create-global-env))
+
+(cl-scheme::env-push! *global-test-env* 'evaluate #'evaluate)
+(cl-scheme::load-script "src/scm/core.scm" *global-test-env* :quiet t)
+
 (defmacro ok-eval (sexp)
-  `(ok (evaluate ',sexp *global-env*)))
+  `(ok (evaluate ',sexp *global-test-env*)))
 
 (deftest numeric-operations-test
   (testing "simple numeric operations"
