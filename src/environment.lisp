@@ -118,3 +118,22 @@
                   for val in args
                   collect (cons sym val))
                 (cdr env))))
+
+(defun env-extend-with-bindings (env bindings)
+  (cons nil
+        (append (loop
+                  for bind in bindings
+                  collect (cons (car bind)
+                                (evaluate (cadr bind) env)))
+                (cdr env))))
+
+(defun env-extend-with-bindings* (env bindings)
+  (if-let (bind (car bindings))
+    (env-extend-with-bindings*
+     (append
+      (list nil
+            (cons (car bind)
+                  (evaluate (cadr bind) env)))
+      (cdr env))
+     (cdr bindings))
+    env))

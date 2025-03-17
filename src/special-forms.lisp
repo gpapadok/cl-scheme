@@ -24,33 +24,6 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defun extend-env-with-bindings (bindings env)
-  (cons nil
-        (append (loop
-                  for bind in bindings
-                  collect (cons (car bind)
-                                (evaluate (cadr bind) env)))
-                (cdr env))))
-
-(defun extend-env-with-bindings* (bindings env)
-  (if-let (bind (car bindings))
-    (extend-env-with-bindings*
-     (cdr bindings)
-     (append
-      (list nil
-            (cons (car bind)
-                  (evaluate (cadr bind) env)))
-      (cdr env)))
-    env))
-
-;; (defun extend-env-with-bindings! (bindings env)
-;;   (cons nil
-;;  (append (loop
-;;        for bind in bindings
-;;        collect (cons (car bind)
-;;              (evaluate (cadr bind) env)))
-;;      (cdr env))))
-
 (defun push-cdr (obj place)
   (setf (cdr place) (cons obj (cdr place))))
 
@@ -140,7 +113,7 @@ the global special form alist"
 
 (defspecial let* (args env)
   (evaluate-body (cdr args)
-                 (extend-env-with-bindings* (car args) env)))
+                 (env-extend-with-bindings* env (car args))))
 
 (defspecial letrec (args env)
   (let ((letenv (copy-list env)))
@@ -253,12 +226,12 @@ the global special form alist"
                                         (evaluate arg env))
                                     args)
                             env)
-                (extend-env-with-bindings
+                (env-extend-with-bindings
+                 doenv
                  (->> varlist
                    (remove-if-not #'third)
                    (mapcar #'(lambda (lst)
-                               (list (car lst) (third lst)))))
-                 doenv)))
+                               (list (car lst) (third lst))))))))
         ((evaluate (car endlist) doenv)
          (evaluate-body (cdr endlist) doenv))
       (evaluate-body body doenv))))
