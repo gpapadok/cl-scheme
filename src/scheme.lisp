@@ -44,6 +44,12 @@
         ((atom expr) expr)
         (t (error "Unknown expression ~a" expr))))
 
+(defun evaluate-body (body env)
+  (dolist (expr
+           (butlast body)
+           (evaluate (car (last body)) env))
+    (evaluate expr env)))
+
 (defun prompt-expr ()
   (format *query-io* "λ> ")
   (force-output *query-io*)

@@ -1,13 +1,5 @@
 (in-package #:cl-scheme)
 
-(declaim (ftype function evaluate))
-
-(defun evaluate-body (body env)
-  (dolist (expr
-           (butlast body)
-           (evaluate (car (last body)) env))
-    (evaluate expr env)))
-
 (defmacro if-let (binding-form true-expression &optional false-expression)
   `(let (,binding-form)
      (if ,(car binding-form)
