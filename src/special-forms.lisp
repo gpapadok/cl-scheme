@@ -2,20 +2,12 @@
 
 ;; TODO: Implement letrec
 
-(defun extend-env (params args env)
-  (cons nil
-        (append (loop
-                  for sym in params
-                  for val in args
-                  collect (cons sym val))
-                (cdr env))))
-
 (defun create-procedure (params body proc-env)
   (cons
    'procedure
    (lambda (args env)
      (evaluate-body body
-                    (extend-env
+                    (env-extend
                      params
                      (mapcar #'(lambda (form)
                                  (funcall #'evaluate form env))
@@ -27,7 +19,7 @@
    'macro
    (lambda (args env)
      (evaluate
-      (evaluate-body body (extend-env params
+      (evaluate-body body (env-extend params
                                       args
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
@@ -256,7 +248,7 @@ the global special form alist"
          (body (cddr args))
          (params (mapcar #'car varlist))
          (args (mapcar #'second varlist)))
-    (do ((doenv (extend-env params
+    (do ((doenv (env-extend params
                             (mapcar #'(lambda (arg)
                                         (evaluate arg env))
                                     args)

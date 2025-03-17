@@ -110,3 +110,11 @@
 
 (defun env-update (env sym value)
   (setf (cdr (assoc sym env)) value))
+
+(defun env-extend (params args env)
+  (cons nil
+        (append (loop
+                  for sym in params
+                  for val in args
+                  collect (cons sym val))
+                (cdr env))))
