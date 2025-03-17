@@ -69,18 +69,18 @@ the global special form alist"
 (defspecial define (args env)
   (if (consp (car args))
       (progn                ; Procedure definition
-        (env-push! (caar args)
+        (env-push! env
+                   (caar args)
                    (create-procedure (cdar args)
                                      (cdr args)
-                                     env)
-                   env)
+                                     env))
         (caar args))
       (progn                ; Variable definition
-        (env-push! (car args)
+        (env-push! env
+                   (car args)
                    (evaluate
                     (cadr args)
-                    env)
-                   env)
+                    env))
         (car args))))
 
 (defspecial cond (args env)
@@ -105,7 +105,7 @@ the global special form alist"
              (proc (create-procedure (mapcar #'car (second args))
                                      (cddr args)
                                      proc-env)))
-        (env-push! name proc proc-env)
+        (env-push! proc-env name proc)
         (funcall (cdr proc) values proc-env))))
 
 (defspecial let* (args env)
@@ -115,7 +115,7 @@ the global special form alist"
 (defspecial letrec (args env)
   (let ((letenv (copy-list env)))
     (dolist (s (mapcar #'car (car args)))
-      (env-push! s nil letenv))
+      (env-push! letenv s nil))
     (dolist (binding (car args))
       (env-update! letenv
                   (car binding)
@@ -170,7 +170,7 @@ the global special form alist"
 (push (cons +quasiquote-symbol+ #'eval-quasiquote) *special-forms*)
 
 (defspecial define-macro (args env)
-  (env-push! (caar args) (create-macro (cdar args) (cdr args) env) env)
+  (env-push! env (caar args) (create-macro (cdar args) (cdr args) env))
   (caar args))
 
 (defspecial set! (args env)

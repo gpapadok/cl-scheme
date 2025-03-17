@@ -99,7 +99,7 @@
 	   ;;
 	   (cons 'procedure? #'functionp)))
 
-(defun env-push! (name value &optional (env *global-env*))
+(defun env-push! (env name value)
   (push-cdr! (cons name value) env))
 
 (defun env-lookup (env sym)
