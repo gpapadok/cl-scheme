@@ -27,21 +27,21 @@
 
 (defun evaluate (expr &optional (env *global-env*))
   (cond ((self-evaluating-p expr) expr)
-	    ((variablep expr) (lookup-variable expr env))
-	    ((special-form-p expr) (evaluate-special-form expr env))
+        ((variablep expr) (lookup-variable expr env))
+        ((special-form-p expr) (evaluate-special-form expr env))
         ((applicationp expr)
-	     (let ((operator (evaluate (car expr) env)))
-	       (cond
-	         ((functionp operator)
-	          (apply operator
-		             (mapcar #'(lambda (form)
-				                 (funcall #'evaluate form env))
-			                 (cdr expr))))
-	         ((or (procedurep operator) (macrop operator))
-	          (funcall (cdr operator) (cdr expr) env))
-	         (t (error "~a not callable" (car expr))))))
+         (let ((operator (evaluate (car expr) env)))
+           (cond
+             ((functionp operator)
+              (apply operator
+                     (mapcar #'(lambda (form)
+                                 (funcall #'evaluate form env))
+                             (cdr expr))))
+             ((or (procedurep operator) (macrop operator))
+              (funcall (cdr operator) (cdr expr) env))
+             (t (error "~a not callable" (car expr))))))
         ((atom expr) expr)
-	    (t (error "Unknown expression ~a" expr))))
+        (t (error "Unknown expression ~a" expr))))
 
 (env-push! *global-env* 'evaluate #'evaluate)
 
@@ -54,23 +54,23 @@
   (with-open-file (script filename)
     (let ((result nil))
       (loop
-	(let ((sexp (read script nil :eof)))
-	  (if (eq sexp :eof)
-	      (progn
-		(when (null quiet)
-		  (format t "~a~%" result))
-		(return))
-	      (handler-case
-		  (setq result (evaluate sexp *global-env*))
-		(error (err) (format t "~a~%" err)))))))))
+        (let ((sexp (read script nil :eof)))
+          (if (eq sexp :eof)
+              (progn
+                (when (null quiet)
+                  (format t "~a~%" result))
+                (return))
+              (handler-case
+                  (setq result (evaluate sexp *global-env*))
+                (error (err) (format t "~a~%" err)))))))))
 
 (defun repl ()
   (loop
     (handler-case
-	(let ((result (evaluate (prompt-expr) *global-env*)))
-	  (if (equal result :quit)
-	      (return)
-	      (format t "~a~%" result)))
+        (let ((result (evaluate (prompt-expr) *global-env*)))
+          (if (equal result :quit)
+              (return)
+              (format t "~a~%" result)))
       (end-of-file () (return))
       (error (err) (format t "~a~%" err))))
   (format t "Bye!"))
