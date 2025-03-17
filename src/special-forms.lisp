@@ -24,7 +24,7 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defparameter *special-forms* '(nil)
+(defparameter *special-forms* (create-env)
   "Special forms alist to map symbol with behavior function")
 
 (defmacro defspecial (name lambda-list &body body)
@@ -102,7 +102,7 @@ the global special form alist"
         (funcall (cdr proc) values env))
       (let* ((name (car args))
              (values (mapcar #'second (second args)))
-             (proc-env (copy-list env)) ; This may be inefficient
+             (proc-env (env-copy env)) ; This may be inefficient
              (proc (create-procedure (mapcar #'car (second args))
                                      (cddr args)
                                      proc-env)))
@@ -114,7 +114,7 @@ the global special form alist"
                  (env-extend-with-bindings* env (car args))))
 
 (defspecial letrec (args env)
-  (let ((letenv (copy-list env)))
+  (let ((letenv (env-copy env)))
     (dolist (s (mapcar #'car (car args)))
       (env-push! letenv s nil))
     (dolist (binding (car args))
@@ -168,7 +168,7 @@ the global special form alist"
         (unquote-quasiquoted (car args) env)
         (error "wrong number of args to quqsiquote: ~a" (length args)))))
 ;; Implementation specific quasiquote symbol
-(push (cons +quasiquote-symbol+ #'eval-quasiquote) *special-forms*)
+(env-push!  *special-forms* +quasiquote-symbol+ #'eval-quasiquote)
 
 (defspecial define-macro (args env)
   (env-push! env (caar args) (create-macro (cdar args) (cdr args) env))
