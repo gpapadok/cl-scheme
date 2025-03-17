@@ -99,7 +99,7 @@
 	   ;;
 	   (cons 'procedure? #'functionp)))
 
-(defun env-push (name value &optional (env *global-env*))
+(defun env-push! (name value &optional (env *global-env*))
   (push-cdr (cons name value) env))
 
 (defun env-lookup (env sym)
@@ -108,7 +108,7 @@
 	    (cdr variable)
 	    (error "~a undefined" sym))))
 
-(defun env-update (env sym value)
+(defun env-update! (env sym value)
   (setf (cdr (assoc sym env)) value))
 
 (defun env-extend (params args env)

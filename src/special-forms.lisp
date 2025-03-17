@@ -147,7 +147,7 @@ the global special form alist"
     (dolist (s (mapcar #'car (car args)))
       (push-cdr (cons s nil) letenv))
     (dolist (binding (car args))
-      (env-update letenv
+      (env-update! letenv
                   (car binding)
                   (evaluate (second binding) letenv)))
     (evaluate-body (cdr args) letenv)))
@@ -208,14 +208,14 @@ the global special form alist"
 (defspecial set! (args env)
   (if (assoc (car args) env)
       (progn
-        (env-update env (car args) (evaluate (cadr args) env))
+        (env-update! env (car args) (evaluate (cadr args) env))
         (car args))
       (error "~a undefined~%" (car args))))
 
 (defspecial set-car! (args env)
   (if-let (val (env-lookup env (car args)))
     (if (consp val)
-        (env-update env
+        (env-update! env
                     (car args)
                     (cons (evaluate (cadr args) env)
                           (cdr val)))
@@ -224,7 +224,7 @@ the global special form alist"
 (defspecial set-cdr! (args env)
   (if-let (val (env-lookup env (car args)))
     (if (consp val)
-        (env-update env
+        (env-update! env
                     (car args)
                     (cons (car val)
                           (evaluate (cadr args) env)))

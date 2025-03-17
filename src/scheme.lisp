@@ -43,7 +43,7 @@
         ((atom expr) expr)
 	    (t (error "Unknown expression ~a" expr))))
 
-(env-push 'evaluate #'evaluate *global-env*)
+(env-push! 'evaluate #'evaluate *global-env*)
 
 (defun prompt-expr ()
   (format *query-io* "λ> ")
