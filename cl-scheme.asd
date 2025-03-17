@@ -9,7 +9,7 @@
                (:file "util")
                (:file "environment")
                (:file "special-forms")
-               (:file "scheme"))
+               (:file "evaluate"))
   :in-order-to ((test-op (test-op :cl-scheme/test))))
 
 (asdf:defsystem :cl-scheme/test
