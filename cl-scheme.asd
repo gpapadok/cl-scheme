@@ -7,8 +7,8 @@
   :serial t
   :components ((:file "package")
                (:file "util")
-               (:file "special-forms")
                (:file "environment")
+               (:file "special-forms")
                (:file "scheme"))
   :in-order-to ((test-op (test-op :cl-scheme/test))))
 

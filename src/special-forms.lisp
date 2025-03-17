@@ -24,7 +24,7 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defparameter *special-forms* nil
+(defparameter *special-forms* '(nil)
   "Special forms alist to map symbol with behavior function")
 
 (defmacro defspecial (name lambda-list &body body)
@@ -37,8 +37,9 @@ the global special form alist"
          ,lambda-list
          ,@body)
 
-       (push (cons ',name #',fn-name)
-             *special-forms*))))
+       (env-push! *special-forms*
+                  ',name
+                  #',fn-name))))
 
 (defconstant +quasiquote-symbol+
   (or #+SBCL 'sb-int:quasiquote
