@@ -28,8 +28,8 @@
 (defun evaluate (expr env)
   (cond ((eq expr :env) (print env))
         ((self-evaluating-p expr) expr)
-        ((variablep expr) (lookup-variable expr env))
         ((special-form-p expr) (evaluate-special-form expr env))
+        ((variablep expr) (lookup-variable expr env))
         ((applicationp expr)
          (let ((operator (evaluate (car expr) env)))
            (cond
