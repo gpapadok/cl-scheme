@@ -2,7 +2,7 @@
   :description "A Scheme implementation in Common Lisp."
   :version "0.1.0"
   :author "Giorgos Papadokostakis"
-  :depends-on (:arrow-macros)
+  :depends-on ()
   :pathname "src/"
   :serial t
   :components ((:file "package")

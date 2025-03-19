@@ -224,10 +224,9 @@ the global special form alist"
                             env)
                 (env-extend-with-bindings
                  doenv
-                 (->> varlist
-                   (remove-if-not #'third)
-                   (mapcar #'(lambda (lst)
-                               (list (car lst) (third lst))))))))
+                 (mapcar #'(lambda (lst)
+                             (list (car lst) (third lst)))
+                         (remove-if-not #'third varlist)))))
         ((evaluate (car endlist) doenv)
          (evaluate-body (cdr endlist) doenv))
       (evaluate-body body doenv))))
