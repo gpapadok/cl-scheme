@@ -5,7 +5,7 @@
                 #:evaluate))
 (in-package #:cl-scheme/test)
 
-(defvar *global-test-env* (cl-scheme::create-global-env))
+(defvar *global-test-env* (cl-scheme::create-global-env :alist-env))
 
 (cl-scheme::env-push! *global-test-env* 'evaluate #'evaluate)
 (cl-scheme::load-script "src/scm/core.scm" *global-test-env* :quiet t)

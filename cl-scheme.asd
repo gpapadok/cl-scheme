@@ -8,8 +8,9 @@
   :components ((:file "package")
                (:file "util")
                (:file "environment")
-               (:file "special-forms")
-               (:file "evaluate"))
+               (:file "evaluate")
+               (:file "alist-environment")
+               (:file "special-forms"))
   :in-order-to ((test-op (test-op :cl-scheme/test))))
 
 (asdf:defsystem :cl-scheme/test

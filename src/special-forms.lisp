@@ -24,7 +24,7 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defparameter *special-forms* (create-env)
+(defparameter *special-forms* (create-env :alist-env)
   "Special forms alist to map symbol with behavior function")
 
 (defmacro defspecial (name lambda-list &body body)
@@ -175,7 +175,7 @@ the global special form alist"
   (caar args))
 
 (defspecial set! (args env)
-  (if (assoc (car args) env)
+  (if (assoc (car args) (bindings env))
       (progn
         (env-update! env (car args) (evaluate (cadr args) env))
         (car args))

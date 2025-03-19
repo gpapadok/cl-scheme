@@ -9,7 +9,7 @@
 (defun special-form-p (expr)
   (and (consp expr)
        (symbolp (car expr))
-       (member (car expr) (mapcar #'car *special-forms*) :test #'string=)))
+       (member (car expr) (mapcar #'car (bindings *special-forms*)) :test #'string=)))
 
 (defun evaluate-special-form (expr env)
   (if-let (eval-op (env-lookup *special-forms* (car expr)))
@@ -70,9 +70,7 @@
                 (error (err) (format t "~a~%" err)))))))))
 
 (defun repl ()
-  (let ((env (create-global-env)))
-    (env-push! env 'evaluate #'evaluate)
-    (load-script "src/scm/core.scm" env :quiet t)
+  (let ((env (create-global-env :alist-env)))
     (loop
       (handler-case
           (let ((result (evaluate (prompt-expr) env)))
