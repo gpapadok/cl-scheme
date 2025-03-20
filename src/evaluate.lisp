@@ -9,11 +9,12 @@
 (defun special-form-p (expr)
   (and (consp expr)
        (symbolp (car expr))
-       (member (car expr) (mapcar #'car (bindings *special-forms*)) :test #'string=)))
+       (member (car expr) *special-forms* :test #'string=)))
 
 (defun evaluate-special-form (expr env)
-  (if-let (eval-op (env-lookup *special-forms* (car expr)))
-    (funcall eval-op (cdr expr) env)
+  (if (member (car expr) *special-forms* :test #'string=)
+    (funcall (intern (concatenate 'string "EVALUATE-" (string (car expr))) :cl-scheme)
+             (cdr expr) env)
     (error "Form ~a not implemented~%" (car expr))))
 
 (defun self-evaluating-p (expr)

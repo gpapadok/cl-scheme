@@ -24,27 +24,26 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defparameter *special-forms* (create-env :alist-env)
-  "Special forms alist to map symbol with behavior function")
+(defparameter *special-forms* nil
+  "Set of all possible Scheme special forms.")
 
 (defmacro defspecial (name lambda-list &body body)
   "Defines a special form evaluation function and pushes it in
 the global special form alist"
   (let ((fn-name (read-from-string
-                  (concatenate 'string "eval-" (string name)))))
+                  (concatenate 'string "EVALUATE-" (string name)))))
     `(progn
        (defun ,fn-name
          ,lambda-list
          ,@body)
 
-       (env-push! *special-forms*
-                  ',name
-                  #',fn-name))))
+       (pushnew ',name *special-forms*))))
 
 (defconstant +quasiquote-symbol+
   (or #+SBCL 'sb-int:quasiquote
       nil)
   "Implementation specific quasiquote symbol")
+(pushnew +quasiquote-symbol+ *special-forms*)
 
 (defspecial if (args env)
   (if (<= 2 (length args) 3)
@@ -167,8 +166,6 @@ the global special form alist"
     (if (= (length args) 1)
         (unquote-quasiquoted (car args) env)
         (error "wrong number of args to quqsiquote: ~a" (length args)))))
-;; Implementation specific quasiquote symbol
-(env-push!  *special-forms* +quasiquote-symbol+ #'eval-quasiquote)
 
 (defspecial define-macro (args env)
   (env-push! env (caar args) (create-macro (cdar args) (cdr args) env))
