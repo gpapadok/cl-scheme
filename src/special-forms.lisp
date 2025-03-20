@@ -24,9 +24,6 @@
                                       macro-env))
       env)))) ; TODO: Probably separate macro-expansion from evaluation
 
-(defparameter *special-forms* nil
-  "Set of all possible Scheme special forms.")
-
 (defmacro defspecial (name lambda-list &body body)
   "Defines a special form evaluation function and pushes it in
 the global special form alist"
@@ -47,10 +44,10 @@ the global special form alist"
 
 (defspecial if (args env)
   (if (<= 2 (length args) 3)
-      (if (evaluate (car args) env)
-          (evaluate (cadr args) env)
-          (evaluate (caddr args) env))
-      (error "malformed if special form")))
+      (if (evaluate (if-condition args) env)
+          (evaluate (if-then args) env)
+          (evaluate (if-else args) env))
+      (error "wrong number of args to if: ~a" (length args))))
 
 (defspecial or (args env)
   ;; TODO: rename `frst`
@@ -87,10 +84,10 @@ the global special form alist"
   (loop
     named cond-form
     for clause in args
-    do (when (evaluate (car clause) env)
+    do (when (evaluate (clause-predicate clause) env)
          (return-from cond-form
            ;; TODO: Should work with multiple expressions for each test
-           (evaluate (cadr clause) env)))))
+           (evaluate (clause-body clause) env)))))
 
 (defspecial let (args env) ; TODO: defining same variable twice should be error
   (if (consp (car args))
@@ -126,20 +123,15 @@ the global special form alist"
   (evaluate-body args env))
 
 (defspecial lambda (args env)
-  (create-procedure (car args) (cdr args) env))
+  (create-procedure (lambda-parameters args)
+                    (lambda-body args)
+                    env))
 
 (defspecial quote (args env)
   (declare (ignore env))
   (if (= (length args) 1)
-      (car args)
+      (form-of-quote args)
       (error "wrong number of args to quote: ~a" (length args))))
-
-(defun contains-comma-at-p (sexp)
-  (some #'(lambda (x)
-            (and (consp x)
-                 (symbolp (car x))
-                 (string= 'unquote-splicing (car x))))
-        sexp))
 
 (defspecial quasiquote (args env)
   (labels ((unquote-quasiquoted (form env)
@@ -148,7 +140,7 @@ the global special form alist"
                  (cond ((and (symbolp (car form))
                              (string= 'unquote (car form))) ; TODO: Figure out how to add , reader macro
                         (evaluate (second form) env))
-                       ((contains-comma-at-p form)
+                       ((contains-comma@-p form)
                         (flet ((sym-position (sym sexp)
                                  (position sym
                                            sexp
@@ -172,29 +164,33 @@ the global special form alist"
   (caar args))
 
 (defspecial set! (args env)
-  (if (assoc (car args) (bindings env))
-      (progn
-        (env-update! env (car args) (evaluate (cadr args) env))
-        (car args))
-      (error "~a undefined~%" (car args))))
+  (if (= (length args) 2)
+      (if (env-lookup env (assignment-variable args))
+          (env-update! env (assignment-variable args) (evaluate (assignment-value args) env))
+          (error "~a undefined~%" (car args)))
+      (error "wrong number of args to set!: ~a" (length args))))
 
 (defspecial set-car! (args env)
-  (if-let (val (env-lookup env (car args)))
-    (if (consp val)
-        (env-update! env
-                    (car args)
-                    (cons (evaluate (cadr args) env)
-                          (cdr val)))
-        (error "~a not a list~%" (car args)))))
+  (if (= (length args) 2)
+      (if-let (val (env-lookup env (assignment-variable args)))
+        (if (consp val)
+            (env-update! env
+                         (assignment-variable args)
+                         (cons (evaluate (assignment-value args) env)
+                               (cdr val)))
+            (error "~a not a list~%" (assignment-variable args))))
+      (error "wrong number of args to set-car!: ~a" (length args))))
 
 (defspecial set-cdr! (args env)
-  (if-let (val (env-lookup env (car args)))
-    (if (consp val)
-        (env-update! env
-                    (car args)
-                    (cons (car val)
-                          (evaluate (cadr args) env)))
-        (error "~a not a list~%" (car args)))))
+  (if (= (length args) 2)
+      (if-let (val (env-lookup env (assignment-variable args)))
+        (if (consp val)
+            (env-update! env
+                         (assignment-variable args)
+                         (cons (car val)
+                               (evaluate (assignment-value args) env)))
+            (error "~a not a list~%" (assignment-variable args))))
+      (error "wrong number of args to set-cdr!: ~a" (length args))))
 
 (defspecial case (args env)
   (let ((test (evaluate (car args) env)))

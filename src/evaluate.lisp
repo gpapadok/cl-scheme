@@ -1,10 +1,15 @@
 (in-package #:cl-scheme)
 
+(defparameter *special-forms* nil
+  "Set of all possible Scheme special forms.")
+
+(defun tag (item) (car item))
+
 (defun procedurep (item)
-  (and (consp item) (eq 'procedure (car item))))
+  (and (consp item) (eq 'procedure (tag item))))
 
 (defun macrop (item)
-  (and (consp item) (eq 'macro (car item))))
+  (and (consp item) (eq 'macro (tag item))))
 
 (defun special-form-p (expr)
   (and (consp expr)
@@ -16,6 +21,25 @@
     (funcall (intern (concatenate 'string "EVALUATE-" (string (car expr))) :cl-scheme)
              (cdr expr) env)
     (error "Form ~a not implemented~%" (car expr))))
+
+(defun expression-operator (expr) (car expr))
+(defun expression-arguments (expr) (cdr expr))
+(defun operator-lambda (expr) (cdr expr))
+
+(defun evaluate-arguments (args env)
+  (mapcar #'(lambda (form)
+              (evaluate form env))
+          args))
+
+(defun evaluate-application (expr env) ; TODO: Can this be simplified?
+  (let ((operator (evaluate (expression-operator expr) env)))
+    (cond
+      ((functionp operator)
+       (apply operator
+              (evaluate-arguments (expression-arguments expr) env)))
+      ((or (procedurep operator) (macrop operator))
+       (funcall (operator-lambda operator) (expression-arguments expr) env))
+      (t (error "~a not callable" (expression-operator expr))))))
 
 (defun self-evaluating-p (expr)
   (or (numberp expr) (stringp expr) (keywordp expr) (vectorp expr)))
@@ -31,17 +55,7 @@
         ((self-evaluating-p expr) expr)
         ((special-form-p expr) (evaluate-special-form expr env))
         ((variablep expr) (lookup-variable expr env))
-        ((applicationp expr)
-         (let ((operator (evaluate (car expr) env)))
-           (cond
-             ((functionp operator)
-              (apply operator
-                     (mapcar #'(lambda (form)
-                                 (funcall #'evaluate form env))
-                             (cdr expr))))
-             ((or (procedurep operator) (macrop operator))
-              (funcall (cdr operator) (cdr expr) env))
-             (t (error "~a not callable" (car expr))))))
+        ((applicationp expr) (evaluate-application expr env))
         ((atom expr) expr)
         (t (error "Unknown expression ~a" expr))))
 
