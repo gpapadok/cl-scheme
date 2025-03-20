@@ -51,7 +51,7 @@
 (defun lookup-variable (expr env) (env-lookup env expr))
 
 (defun evaluate (expr env)
-  (cond ((eq expr :env) (print env))
+  (cond ((eq expr :env) (print env)) ; TODO: Remove
         ((self-evaluating-p expr) expr)
         ((special-form-p expr) (evaluate-special-form expr env))
         ((variablep expr) (lookup-variable expr env))

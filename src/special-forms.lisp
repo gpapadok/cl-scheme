@@ -1,6 +1,8 @@
 (in-package #:cl-scheme)
 
 ;; TODO: Implement letrec
+;; TODO: Custom condition for malformed special form
+;; TODO: Malformation should be check in macro
 
 (defun create-procedure (params body proc-env)
   (cons
