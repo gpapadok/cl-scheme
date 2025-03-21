@@ -60,10 +60,10 @@
         (t (error "Unknown expression ~a" expr))))
 
 (defun evaluate-body (body env)
-  (dolist (expr
-           (butlast body)
-           (evaluate (car (last body)) env))
-    (evaluate expr env)))
+  (let ((result (evaluate (car body) env)))
+    (if (null (cdr body))
+        result
+        (evaluate-body (cdr body) env))))
 
 (defun prompt-expr ()
   (format *query-io* "λ> ")
