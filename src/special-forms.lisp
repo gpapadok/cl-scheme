@@ -42,7 +42,8 @@ the global special form alist"
   (or #+SBCL 'sb-int:quasiquote
       nil)
   "Implementation specific quasiquote symbol")
-(pushnew +quasiquote-symbol+ *special-forms*)
+(eval-when (:compile-toplevel :load-toplevel)
+  (pushnew +quasiquote-symbol+ *special-forms*))
 
 (defspecial if (args env)
   (if (<= 2 (length args) 3)
