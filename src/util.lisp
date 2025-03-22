@@ -9,6 +9,8 @@
 (defun push-cdr! (obj place)
   (setf (cdr place) (cons obj (cdr place))))
 
+(defun tag (item) (car item))
+
 (defun if-condition (form) (car form))
 (defun if-then (form) (second form))
 (defun if-else (form) (third form))
@@ -30,3 +32,21 @@
 
 (defun assignment-variable (form) (car form))
 (defun assignment-value (form) (second form))
+
+(defun expression-operator (expr) (car expr))
+(defun expression-arguments (expr) (cdr expr))
+(defun operator-lambda (expr) (cdr expr))
+
+(defun valid-define-args-p (form)
+  (or (consp (car form))
+      (= (length form) 2)))
+
+(defun definition-variable (form)
+  (if (consp (car form))
+      (caar form)
+      (car form)))
+
+(defun definition-value (form)
+  (if (consp (car form))
+      `(lambda ,(cdar form) ,@(cdr form))
+      (second form)))

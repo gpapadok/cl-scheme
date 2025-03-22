@@ -3,8 +3,6 @@
 (defparameter *special-forms* nil
   "Set of all possible Scheme special forms.")
 
-(defun tag (item) (car item))
-
 (defun procedurep (item)
   (and (consp item) (eq 'procedure (tag item))))
 
@@ -21,10 +19,6 @@
     (funcall (intern (concatenate 'string "EVALUATE-" (string (car expr))) :cl-scheme)
              (cdr expr) env)
     (error "Form ~a not implemented~%" (car expr))))
-
-(defun expression-operator (expr) (car expr))
-(defun expression-arguments (expr) (cdr expr))
-(defun operator-lambda (expr) (cdr expr))
 
 (defun evaluate-arguments (args env)
   (mapcar #'(lambda (form)

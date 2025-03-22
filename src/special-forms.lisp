@@ -66,21 +66,11 @@ the global special form alist"
         frst)))
 
 (defspecial define (args env)
-  (if (consp (car args))
-      (progn                ; Procedure definition
-        (env-push! env
-                   (caar args)
-                   (create-procedure (cdar args)
-                                     (cdr args)
-                                     env))
-        (caar args))
-      (progn                ; Variable definition
-        (env-push! env
-                   (car args)
-                   (evaluate
-                    (cadr args)
-                    env))
-        (car args))))
+  (if (valid-define-args-p args)
+      (env-push! env
+                 (definition-variable args)
+                 (evaluate (definition-value args) env))
+      (error "malformed define form")))
 
 (defspecial cond (args env)
   (loop
