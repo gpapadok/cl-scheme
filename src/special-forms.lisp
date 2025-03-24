@@ -74,13 +74,15 @@ the global special form alist"
       (error "malformed define form")))
 
 (defspecial cond (args env)
-  (loop
-    named cond-form
-    for clause in args
-    do (when (evaluate (clause-predicate clause) env)
-         (return-from cond-form
-           ;; TODO: Should work with multiple expressions for each test
-           (evaluate (clause-body clause) env)))))
+  (labels ((recur (clauses)
+             (if (null clauses)
+                 nil
+                 (let ((clause (car clauses)))
+                   (if (evaluate (clause-predicate clause) env)
+                       ;; TODO: Should work with multiple expressions for each test
+                       (evaluate (clause-body clause) env)
+                       (recur (cdr clauses)))))))
+    (recur args)))
 
 (defspecial let (args env) ; TODO: defining same variable twice should be error
   (if (consp (car args))
