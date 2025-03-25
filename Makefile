@@ -10,7 +10,6 @@ run: build
 
 test:
 	sbcl --noinform --eval "(asdf:initialize-source-registry \"$(PWD)\")" \
-                    --eval "(progn (print 'source-registry-parameter) (print asdf:*source-registry-parameter*))" \
                     --eval "(asdf:test-system :cl-scheme)" --quit
 
 clean:
