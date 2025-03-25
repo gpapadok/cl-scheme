@@ -70,7 +70,7 @@ the global special form alist"
 
 (defspecial define (args env)
   (if (valid-define-args-p args)
-      (env-push! env
+      (env-define! env
                  (definition-variable args)
                  (evaluate (definition-value args) env))
       (error "malformed define form")))
@@ -99,7 +99,7 @@ the global special form alist"
              (proc (create-procedure (mapcar #'car (second args))
                                      (cddr args)
                                      proc-env)))
-        (env-push! proc-env name proc)
+        (env-define! proc-env name proc)
         (funcall (cdr proc) values proc-env))))
 
 (defspecial let* (args env)
@@ -109,9 +109,9 @@ the global special form alist"
 (defspecial letrec (args env)
   (let ((letenv (env-copy env)))
     (dolist (s (mapcar #'car (car args)))
-      (env-push! letenv s nil))
+      (env-define! letenv s nil))
     (dolist (binding (car args))
-      (env-update! letenv
+      (env-set! letenv
                   (car binding)
                   (evaluate (second binding) letenv)))
     (evaluate-body (cdr args) letenv)))
@@ -157,13 +157,13 @@ the global special form alist"
         (error "wrong number of args to quqsiquote: ~a" (length args)))))
 
 (defspecial define-macro (args env)
-  (env-push! env (caar args) (create-macro (cdar args) (cdr args) env))
+  (env-define! env (caar args) (create-macro (cdar args) (cdr args) env))
   (caar args))
 
 (defspecial set! (args env)
   (if (= (length args) 2)
       (if (env-lookup env (assignment-variable args))
-          (env-update! env (assignment-variable args) (evaluate (assignment-value args) env))
+          (env-set! env (assignment-variable args) (evaluate (assignment-value args) env))
           (error "~a undefined~%" (car args)))
       (error "wrong number of args to set!: ~a" (length args))))
 
@@ -171,7 +171,7 @@ the global special form alist"
   (if (= (length args) 2)
       (if-let (val (env-lookup env (assignment-variable args)))
         (if (consp val)
-            (env-update! env
+            (env-set! env
                          (assignment-variable args)
                          (cons (evaluate (assignment-value args) env)
                                (cdr val)))
@@ -182,7 +182,7 @@ the global special form alist"
   (if (= (length args) 2)
       (if-let (val (env-lookup env (assignment-variable args)))
         (if (consp val)
-            (env-update! env
+            (env-set! env
                          (assignment-variable args)
                          (cons (car val)
                                (evaluate (assignment-value args) env)))

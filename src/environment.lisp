@@ -13,17 +13,16 @@
                                                              arg))
                                             nil)))
 
-
 (defgeneric env-copy (env)
   (:documentation "Creates a copy of the environment."))
 
-(defgeneric env-push! (env name value)
+(defgeneric env-define! (env name value)
   (:documentation "Binds a value to a name in the environment."))
 
 (defgeneric env-lookup (env name)
   (:documentation "Returns the value bound to the name in the environment."))
 
-(defgeneric env-update! (env name value)
+(defgeneric env-set! (env name value)
   (:documentation "Updates a name with a new value in an environment."))
 
 (defgeneric env-extend (params args env)

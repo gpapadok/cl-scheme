@@ -98,7 +98,7 @@
     (load-script "src/scm/core.scm" env :quiet t)
     env))
 
-(defmethod env-push! ((env alist-env) name value)
+(defmethod env-define! ((env alist-env) name value)
   (push-cdr! (cons name value) (bindings env)))
 
 (defmethod env-lookup ((env alist-env) sym)
@@ -107,7 +107,7 @@
 	    (cdr variable)
 	    (error "~a undefined" sym))))
 
-(defmethod env-update! ((env alist-env) sym value)
+(defmethod env-set! ((env alist-env) sym value)
   (setf (cdr (assoc sym (bindings env))) value))
 
 (defmethod env-extend (params args (env alist-env))
