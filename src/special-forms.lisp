@@ -3,6 +3,8 @@
 ;; TODO: Implement letrec
 ;; TODO: Custom condition for malformed special form
 ;; TODO: Malformation should be check in macro
+;; TODO: Implement named let
+;; TODO: Should let be a non derived expression? Ponder
 
 (defun create-procedure (params body proc-env)
   (cons

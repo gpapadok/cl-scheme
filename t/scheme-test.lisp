@@ -5,6 +5,9 @@
                 #:evaluate))
 (in-package #:cl-scheme/test)
 
+;; TODO: Break into files
+;; TODO: Add tests that should fail
+
 (defvar *global-test-env* (cl-scheme::create-global-env :alist-env))
 
 (cl-scheme::env-push! *global-test-env* 'evaluate #'evaluate)

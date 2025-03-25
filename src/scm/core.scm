@@ -1,3 +1,5 @@
+;; TODO: Implement iterative constructs like do, for, while, until
+
 (define (map op seq) ; TODO: This should work for multiple sequences
   (if (null? seq)
       seq
