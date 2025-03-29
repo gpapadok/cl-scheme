@@ -16,9 +16,9 @@
 
 (defun evaluate-special-form (expr env)
   (if (member (car expr) *special-forms* :test #'string=)
-    (funcall (intern (concatenate 'string "EVALUATE-" (string (car expr))) :cl-scheme)
-             (cdr expr) env)
-    (error "Form ~a not implemented~%" (car expr))))
+      (funcall (intern (concatenate 'string "EVALUATE-" (string (car expr))) :cl-scheme)
+               (cdr expr) env)
+      (error "Form ~a not implemented~%" (car expr))))
 
 (defun evaluate-arguments (args env)
   (mapcar #'(lambda (form)

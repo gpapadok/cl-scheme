@@ -71,8 +71,8 @@ the global special form alist"
 (defspecial define (args env)
   (if (valid-define-args-p args)
       (env-define! env
-                 (definition-variable args)
-                 (evaluate (definition-value args) env))
+                   (definition-variable args)
+                   (evaluate (definition-value args) env))
       (error "malformed define form")))
 
 (defspecial cond (args env)
