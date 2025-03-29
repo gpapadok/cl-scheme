@@ -64,6 +64,7 @@
   (force-output *query-io*)
   (read t t))
 
+;; TODO: Separate file for load
 (defun load-script (filename env &key quiet)
   (with-open-file (script filename)
     (let ((result nil))
@@ -77,6 +78,10 @@
               (handler-case
                   (setq result (evaluate sexp env))
                 (error (err) (format t "~a~%" err)))))))))
+
+(defun load-scheme-files (env &key quiet)
+  (loop for file in (uiop:directory-files (system-relative-pathname +scheme-path+))
+        do (load-script file env :quiet quiet)))
 
 (defun repl ()
   (let ((env (create-global-env :alist-env)))

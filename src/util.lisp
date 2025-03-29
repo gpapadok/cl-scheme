@@ -50,3 +50,11 @@
   (if (consp (car form))
       `(lambda ,(cdar form) ,@(cdr form))
       (second form)))
+
+(defun system-relative-pathname (path)
+  (asdf:system-relative-pathname :cl-scheme path))
+
+(defconstant +scheme-path+ "src/scm/")
+
+(defun scheme-pathname (path)
+  (system-relative-pathname (merge-pathnames path +scheme-path+)))

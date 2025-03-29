@@ -17,5 +17,9 @@
   :author "Giorgos Papadokostakis"
   :depends-on (:cl-scheme :rove)
   :pathname "t/"
-  :components ((:file "scheme-test"))
+  :serial t
+  :components ((:file "package")
+               (:file "util")
+               (:file "evaluate-test")
+               (:file "special-forms-test"))
   :perform (test-op (o c) (symbol-call :rove :run c)))
