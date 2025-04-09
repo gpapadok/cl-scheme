@@ -202,24 +202,22 @@ the global special form alist"
              (evaluate (cadr clause) env))))))
 
 (defspecial do (args env)
-  (let* ((varlist (car args))
-         (endlist (second args))
-         (body (cddr args))
-         (params (mapcar #'car varlist))
-         (args (mapcar #'second varlist)))
-    (do ((doenv (env-extend params
-                            (mapcar #'(lambda (arg)
-                                        (evaluate arg env))
-                                    args)
-                            env)
-                (env-extend-with-bindings
-                 doenv
-                 (mapcar #'(lambda (lst)
-                             (list (car lst) (third lst)))
-                         (remove-if-not #'third varlist)))))
-        ((evaluate (car endlist) doenv)
-         (evaluate-body (cdr endlist) doenv))
-      (evaluate-body body doenv))))
+  (destructuring-bind (varlist endlist . body) args
+    (let ((params (mapcar #'car varlist))
+          (args (mapcar #'second varlist)))
+      (do ((doenv (env-extend params
+                              (mapcar #'(lambda (arg)
+                                          (evaluate arg env))
+                                      args)
+                              env)
+                  (env-extend-with-bindings
+                   doenv
+                   (mapcar #'(lambda (lst)
+                               (list (car lst) (evaluate (third lst) doenv)))
+                           (remove-if-not #'third varlist)))))
+          ((evaluate (car endlist) doenv)
+           (evaluate-body (cdr endlist) doenv))
+        (evaluate-body body doenv)))))
 
 (defspecial delay (args env)
   (if (= (length args) 1)
